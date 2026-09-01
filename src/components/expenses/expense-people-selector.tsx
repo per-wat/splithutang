@@ -7,6 +7,7 @@ export type Person = {
   name: string;
   initial: string;
   color: string;
+  isSelf: boolean;
 };
 
 type ExpensePeopleSelectorProps = {

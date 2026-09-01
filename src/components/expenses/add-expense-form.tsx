@@ -1,4 +1,5 @@
 "use client";
+import { createClient } from "@/lib/supabase/client";
 
 import { useMemo, useState } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -12,38 +13,15 @@ import {
 
 import { ExpensePeopleSelector, type Person } from "./expense-people-selector";
 
-const people: Person[] = [
-  {
-    id: "you",
-    name: "You",
-    initial: "Y",
-    color: "bg-blue-600",
-  },
-  {
-    id: "ahmad",
-    name: "Ahmad",
-    initial: "A",
-    color: "bg-purple-600",
-  },
-  {
-    id: "sarah",
-    name: "Sarah",
-    initial: "S",
-    color: "bg-pink-600",
-  },
-  {
-    id: "raj",
-    name: "Raj",
-    initial: "R",
-    color: "bg-orange-600",
-  },
-  {
-    id: "lisa",
-    name: "Lisa",
-    initial: "L",
-    color: "bg-emerald-600",
-  },
-];
+export type ExpenseGroupOption = {
+  id: string;
+  name: string;
+  people: Person[];
+};
+
+type AddExpenseFormProps = {
+  groups: ExpenseGroupOption[];
+};
 
 type SplitMethod = "equal" | "amount" | "items";
 
@@ -57,18 +35,39 @@ const createEmptyItem = (selectedPeople: string[]): ExpenseItem => ({
   subItems: [],
 });
 
-export function AddExpenseForm() {
+function getLocalDate() {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  return `${day}-${month}-${year}`;
+}
+
+export function AddExpenseForm({ groups }: AddExpenseFormProps) {
   const router = useRouter();
+
+  const supabase = useMemo(() => createClient(), []);
+
+  const [selectedGroupId, setSelectedGroupId] = useState(groups[0]?.id ?? "");
+
+  const selectedGroup = groups.find((group) => group.id === selectedGroupId);
+
+  const people = selectedGroup?.people ?? [];
+
+  const selfPerson = people.find((person) => person.isSelf);
 
   const [expenseName, setExpenseName] = useState("");
 
-  const [date, setDate] = useState("30/08/2026");
+  const [date, setDate] = useState(getLocalDate());
 
-  const [paidBy, setPaidBy] = useState("you");
+  const initialPersonIds = people.map((person) => person.id);
 
-  const [selectedPeople, setSelectedPeople] = useState<string[]>(
-    people.map((person) => person.id),
-  );
+  const [paidBy, setPaidBy] = useState(selfPerson?.id ?? people[0]?.id ?? "");
+
+  const [selectedPeople, setSelectedPeople] =
+    useState<string[]>(initialPersonIds);
 
   const [splitMethod, setSplitMethod] = useState<SplitMethod>("equal");
 
@@ -79,8 +78,12 @@ export function AddExpenseForm() {
   );
 
   const [items, setItems] = useState<ExpenseItem[]>([
-    createEmptyItem(selectedPeople),
+    createEmptyItem(initialPersonIds),
   ]);
+
+  const [saving, setSaving] = useState(false);
+
+  const [error, setError] = useState("");
 
   /*
    * ------------------------------------------
@@ -136,9 +139,20 @@ export function AddExpenseForm() {
 
   const togglePerson = (personId: string) => {
     setSelectedPeople((current) => {
-      const next = current.includes(personId)
+      const removing = current.includes(personId);
+
+      const next = removing
         ? current.filter((id) => id !== personId)
         : [...current, personId];
+
+      if (removing) {
+        setItems((currentItems) =>
+          currentItems.map((item) => ({
+            ...item,
+            people: item.people.filter((id) => id !== personId),
+          })),
+        );
+      }
 
       return next;
     });
@@ -297,9 +311,24 @@ export function AddExpenseForm() {
     selectedPeople.length > 0 &&
     paidBy.length > 0;
 
-  const hasValidSplit = totalAmount > 0;
+  const validItems =
+    items.length > 0 &&
+    items.every(
+      (item) =>
+        item.name.trim().length > 0 &&
+        Number(item.amount || 0) >= 0 &&
+        item.people.length > 0 &&
+        item.subItems.every(
+          (subItem) =>
+            subItem.name.trim().length > 0 && Number(subItem.amount || 0) >= 0,
+        ),
+    );
 
-  const canSave = hasValidBasicInfo && hasValidSplit;
+  const hasValidSplit =
+    totalAmount > 0 && (splitMethod !== "items" || validItems);
+
+  const canSave =
+    selectedGroupId.length > 0 && hasValidBasicInfo && hasValidSplit;
 
   /*
    * ------------------------------------------
@@ -307,31 +336,96 @@ export function AddExpenseForm() {
    * ------------------------------------------
    */
 
-  const handleSave = () => {
-    if (!canSave) {
+  async function handleSave() {
+    if (!canSave || saving) {
       return;
     }
 
-    const expense = {
-      name: expenseName.trim(),
-      date,
-      paidBy,
-      people: selectedPeople,
-      splitMethod,
-      totalAmount,
-      amounts: splitMethod === "amount" ? amounts : undefined,
-      items: splitMethod === "items" ? items : undefined,
-    };
+    setSaving(true);
+    setError("");
 
-    /*
-     * Temporary:
-     * We'll replace this with Supabase
-     * later.
-     */
-    console.log("Expense:", expense);
+    const participants = selectedPeople.map((personId) => ({
+      person_id: personId,
+
+      share_amount:
+        splitMethod === "amount" ? Number(amounts[personId] || 0) : null,
+    }));
+
+    const expenseItems =
+      splitMethod === "items"
+        ? items.map((item) => ({
+            name: item.name.trim(),
+
+            amount: Number(item.amount) || 0,
+
+            people: item.people,
+
+            sub_items: item.subItems.map((subItem) => ({
+              name: subItem.name.trim(),
+
+              amount: Number(subItem.amount) || 0,
+            })),
+          }))
+        : [];
+
+    const { error } = await supabase.rpc("create_expense", {
+      p_group_id: selectedGroupId,
+
+      p_name: expenseName.trim(),
+
+      p_expense_date: date,
+
+      p_paid_by: paidBy,
+
+      p_split_method: splitMethod,
+
+      p_total_amount: totalAmount,
+
+      p_participants: participants,
+
+      p_items: expenseItems,
+    });
+
+    if (error) {
+      console.error("Unable to create expense:", error);
+
+      setError(error.message);
+      setSaving(false);
+
+      return;
+    }
 
     router.push("/expenses");
-  };
+    router.refresh();
+  }
+
+  function handleGroupChange(groupId: string) {
+    const group = groups.find((item) => item.id === groupId);
+
+    setSelectedGroupId(groupId);
+
+    if (!group) {
+      setPaidBy("");
+      setSelectedPeople([]);
+      setAmounts({});
+      setItems([]);
+      return;
+    }
+
+    const groupPersonIds = group.people.map((person) => person.id);
+
+    const self = group.people.find((person) => person.isSelf);
+
+    setPaidBy(self?.id ?? group.people[0]?.id ?? "");
+
+    setSelectedPeople(groupPersonIds);
+
+    setAmounts(
+      Object.fromEntries(group.people.map((person) => [person.id, "0.00"])),
+    );
+
+    setItems([createEmptyItem(groupPersonIds)]);
+  }
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-10">
@@ -354,6 +448,31 @@ export function AddExpenseForm() {
       {/* Basic information */}
       <section className="mt-3">
         <h2 className="mb-4 text-sm font-bold">Basic Information</h2>
+
+        <div>
+          <label
+            htmlFor="expense-group"
+            className="mb-2 block text-sm font-semibold"
+          >
+            Group
+          </label>
+
+          <select
+            id="expense-group"
+            value={selectedGroupId}
+            onChange={(event) => handleGroupChange(event.target.value)}
+            className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm outline-none transition-colors focus:border-blue-500"
+          >
+            {groups.map((group) => (
+              <option
+                key={group.id}
+                value={group.id}
+              >
+                {group.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className="space-y-4">
           <div>
@@ -587,7 +706,9 @@ export function AddExpenseForm() {
             <ExpenseItemEditor
               key={item.id}
               item={item}
-              people={people}
+              people={people.filter((person) =>
+                selectedPeople.includes(person.id),
+              )}
               onUpdate={updateItem}
               onRemove={removeItem}
               onTogglePerson={toggleItemPerson}
@@ -616,15 +737,21 @@ export function AddExpenseForm() {
         </section>
       )}
 
+      {error && (
+        <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3">
+          <p className="text-sm text-red-400">{error}</p>
+        </div>
+      )}
+
       {/* Save */}
       <div className="mt-6">
         <button
           type="button"
-          disabled={!canSave}
+          disabled={!canSave || saving}
           onClick={handleSave}
           className="h-14 w-full rounded-2xl bg-blue-600 text-base font-bold text-white shadow-sm transition-all hover:bg-blue-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-blue-600/40 disabled:text-white/60"
         >
-          Save Expense
+          {saving ? "Saving..." : "Save Expense"}
         </button>
       </div>
     </div>

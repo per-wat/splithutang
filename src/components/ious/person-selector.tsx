@@ -1,6 +1,6 @@
 "use client";
 
-type Person = {
+export type Person = {
   id: string;
   name: string;
   initial: string;

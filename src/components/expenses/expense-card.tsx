@@ -1,9 +1,11 @@
+export type ExpenseStatus = "owed-to-me" | "i-owe" | "settled" | "group";
+
 type ExpenseCardProps = {
   title: string;
   date: string;
   paidBy: string;
   amount: number;
-  status: "owed-to-me" | "i-owe" | "settled";
+  status: ExpenseStatus;
   unpaidCount?: number;
 };
 
@@ -16,13 +18,20 @@ const statusStyles = {
     label: "Owed to you",
     className: "text-emerald-400",
   },
+
   "i-owe": {
     label: "You owe",
     className: "text-red-400",
   },
+
   settled: {
     label: "Settled",
     className: "text-muted-foreground",
+  },
+
+  group: {
+    label: "Group expense",
+    className: "text-blue-400",
   },
 };
 

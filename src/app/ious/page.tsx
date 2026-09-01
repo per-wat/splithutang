@@ -1,67 +1,87 @@
-import { IouCard } from "@/components/ious/iou-card";
-import { IouFilters } from "@/components/ious/iou-filters";
+import { redirect } from "next/navigation";
+
 import { IousHeader } from "@/components/ious/ious-header";
+
+import { IousList, type IouOverview } from "@/components/ious/ious-list";
+
+import type { IouStatus } from "@/components/ious/iou-card";
+
 import { AppShell } from "@/components/layout/app-shell";
+import { createClient } from "@/lib/supabase/server";
 
-const ious = [
-  {
-    id: 1,
-    title: "Borrowed for parking",
-    date: "21 Aug",
-    from: "Ahmad",
-    to: "You",
-    amount: 25,
-    status: "owed-to-me" as const,
-  },
-  {
-    id: 2,
-    title: "Movie snacks",
-    date: "20 Aug",
-    from: "You",
-    to: "Sarah",
-    amount: 17,
-    status: "i-owe" as const,
-  },
-  {
-    id: 3,
-    title: "Concert ticket",
-    date: "18 Aug",
-    from: "Raj",
-    to: "You",
-    amount: 65,
-    status: "owed-to-me" as const,
-  },
-  {
-    id: 4,
-    title: "Lunch money",
-    date: "17 Aug",
-    from: "You",
-    to: "Ahmad",
-    amount: 32,
-    status: "settled" as const,
-  },
-];
+function formatDate(date: string) {
+  return new Intl.DateTimeFormat("en-MY", {
+    day: "numeric",
+    month: "short",
+  }).format(new Date(`${date}T00:00:00`));
+}
 
-export default function IousPage() {
+function getIouStatus(status: string): IouStatus {
+  switch (status) {
+    case "owed-to-me":
+    case "i-owe":
+    case "settled":
+    case "group":
+      return status;
+
+    default:
+      return "group";
+  }
+}
+
+export default async function IousPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data, error } = await supabase.rpc("get_ious_overview");
+
+  if (error) {
+    console.error("Failed to load IOUs:", error);
+
+    return (
+      <AppShell>
+        <IousHeader />
+
+        <div className="px-5 pt-8">
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+            <p className="font-medium text-red-400">Unable to load IOUs</p>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Please try again later.
+            </p>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const ious: IouOverview[] = (data ?? []).map((iou) => ({
+    id: iou.iou_id,
+    title: iou.reason,
+    date: formatDate(iou.iou_date),
+    from: iou.from_name,
+    to: iou.to_name,
+
+    // Show what is still owed.
+    amount: Number(iou.outstanding_amount),
+
+    originalAmount: Number(iou.original_amount),
+
+    status: getIouStatus(iou.status),
+  }));
+
   return (
     <AppShell>
       <IousHeader />
 
-      <IouFilters />
-
-      <section className="space-y-3 px-5 pb-8 pt-5">
-        {ious.map((iou) => (
-          <IouCard
-            key={iou.id}
-            title={iou.title}
-            date={iou.date}
-            from={iou.from}
-            to={iou.to}
-            amount={iou.amount}
-            status={iou.status}
-          />
-        ))}
-      </section>
+      <IousList ious={ious} />
     </AppShell>
   );
 }
