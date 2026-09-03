@@ -42,7 +42,7 @@ function getLocalDate() {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
 
-  return `${day}-${month}-${year}`;
+  return `${year}-${month}-${day}`;
 }
 
 export function AddExpenseForm({ groups }: AddExpenseFormProps) {
@@ -105,11 +105,11 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
   }, [items]);
 
   const amountSplitTotal = useMemo(() => {
-    return Object.values(amounts).reduce(
-      (total, amount) => total + (Number(amount) || 0),
+    return selectedPeople.reduce(
+      (total, personId) => total + (Number(amounts[personId]) || 0),
       0,
     );
-  }, [amounts]);
+  }, [amounts, selectedPeople]);
 
   const totalAmount = useMemo(() => {
     if (splitMethod === "items") {
@@ -123,13 +123,22 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
     return Number(totalExpense) || 0;
   }, [splitMethod, totalExpense, itemsTotal, amountSplitTotal]);
 
-  const equalAmount = useMemo(() => {
+  const equalShares = useMemo(() => {
     if (selectedPeople.length === 0) {
-      return 0;
+      return {} as Record<string, number>;
     }
 
-    return totalAmount / selectedPeople.length;
-  }, [selectedPeople.length, totalAmount]);
+    const totalCents = Math.round(totalAmount * 100);
+    const baseCents = Math.floor(totalCents / selectedPeople.length);
+    const remainder = totalCents % selectedPeople.length;
+
+    return Object.fromEntries(
+      selectedPeople.map((personId, index) => [
+        personId,
+        (baseCents + (index < remainder ? 1 : 0)) / 100,
+      ]),
+    ) as Record<string, number>;
+  }, [selectedPeople, totalAmount]);
 
   /*
    * ------------------------------------------
@@ -502,7 +511,7 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
 
             <input
               id="expense-date"
-              type="text"
+              type="date"
               value={date}
               onChange={(event) => setDate(event.target.value)}
               className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm outline-none transition-colors focus:border-blue-500"
@@ -638,7 +647,9 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
                     <span className="text-sm font-semibold">{person.name}</span>
                   </div>
 
-                  <span className="font-bold">RM {equalAmount.toFixed(2)}</span>
+                  <span className="font-bold">
+                    RM {(equalShares[person.id] ?? 0).toFixed(2)}
+                  </span>
                 </div>
               ))}
           </div>

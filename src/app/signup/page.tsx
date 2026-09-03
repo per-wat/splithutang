@@ -1,28 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+import { createClient } from "@/lib/supabase/client";
+
+export default function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
+
+  const supabase = useMemo(() => createClient(), []);
+
+  const [displayName, setDisplayName] = useState("");
 
   const [email, setEmail] = useState("");
+
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
+
+  const [success, setSuccess] = useState("");
+
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+  async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    const cleanName = displayName.trim();
+
+    if (!cleanName) {
+      setError("Please enter your name.");
+      return;
+    }
+
     setError("");
+    setSuccess("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
       password,
+
+      options: {
+        data: {
+          display_name: cleanName,
+        },
+      },
     });
 
     if (error) {
@@ -31,22 +54,48 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    if (data.session) {
+      router.push("/");
+      router.refresh();
+      return;
+    }
+
+    setSuccess(
+      "Account created. Check your email to confirm your account, then sign in.",
+    );
+
+    setLoading(false);
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
+    <main className="flex min-h-dvh items-center justify-center bg-background p-6 text-foreground">
       <form
-        onSubmit={handleLogin}
+        onSubmit={handleSignup}
         className="w-full max-w-sm space-y-4"
       >
         <div>
-          <h1 className="text-2xl font-semibold">SplitHutang</h1>
+          <h1 className="text-2xl font-semibold">Create account</h1>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Sign in to continue
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Join SplitHutang</p>
+        </div>
+
+        <div className="space-y-2">
+          <label
+            htmlFor="displayName"
+            className="text-sm font-medium"
+          >
+            Name
+          </label>
+
+          <input
+            id="displayName"
+            type="text"
+            value={displayName}
+            onChange={(event) => setDisplayName(event.target.value)}
+            required
+            autoComplete="name"
+            className="w-full rounded-md border bg-background px-3 py-2"
+          />
         </div>
 
         <div className="space-y-2">
@@ -63,6 +112,7 @@ export default function LoginPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
+            autoComplete="email"
             className="w-full rounded-md border bg-background px-3 py-2"
           />
         </div>
@@ -81,27 +131,31 @@ export default function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
+            minLength={8}
+            autoComplete="new-password"
             className="w-full rounded-md border bg-background px-3 py-2"
           />
         </div>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
+        {success && <p className="text-sm text-emerald-400">{success}</p>}
+
         <button
           type="submit"
           disabled={loading}
           className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Creating account..." : "Create account"}
         </button>
 
         <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          Already have an account?{" "}
           <Link
-            href="/signup"
+            href="/login"
             className="font-medium text-foreground underline underline-offset-4"
           >
-            Create account
+            Sign in
           </Link>
         </p>
       </form>

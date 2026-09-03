@@ -5,6 +5,8 @@ import { notFound, redirect } from "next/navigation";
 import { ExpenseParticipantRow } from "@/components/expenses/expense-participant-row";
 import { createClient } from "@/lib/supabase/server";
 import { getPersonDisplayName } from "@/lib/person-display-name";
+import { PaymentReviewActions } from "@/components/payments/payment-review-actions";
+import { formatDateOnly, formatTimestampDateMY } from "@/lib/date-format";
 
 type ExpenseDetailPageProps = {
   params: Promise<{
@@ -23,14 +25,6 @@ const fallbackColors = [
 
 function formatMoney(amount: number) {
   return `RM ${amount.toFixed(2)}`;
-}
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-MY", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(`${date}T00:00:00`));
 }
 
 export default async function ExpenseDetailPage({
@@ -89,7 +83,7 @@ export default async function ExpenseDetailPage({
     await Promise.all([
       supabase
         .from("groups")
-        .select("id, name, owner_id")
+        .select("id, name, owner_id, allow_debtor_self_confirm")
         .eq("id", expense.group_id)
         .maybeSingle(),
 
@@ -107,7 +101,11 @@ export default async function ExpenseDetailPage({
           to_person_id,
           amount,
           paid_at,
-          note
+          note,
+          status,
+          submitted_by_user_id,
+          resolved_by_user_id,
+          resolved_at
         `,
         )
         .eq("expense_id", expense.id)
@@ -139,6 +137,8 @@ export default async function ExpenseDetailPage({
       payments: paymentsResult.error,
       items: itemsResult.error,
     });
+
+    throw new Error("Unable to load expense details");
   }
 
   const group = groupResult.data;
@@ -257,8 +257,6 @@ export default async function ExpenseDetailPage({
     (person) => person.linked_user_id === user.id,
   );
 
-  const isGroupOwner = group?.owner_id === user.id;
-
   /*
    * ------------------------------------------
    * Participant calculations
@@ -283,18 +281,39 @@ export default async function ExpenseDetailPage({
             .filter(
               (payment) =>
                 payment.from_person_id === person.id &&
-                payment.to_person_id === expense.paid_by,
+                payment.to_person_id === expense.paid_by &&
+                payment.status === "confirmed",
+            )
+            .reduce((total, payment) => total + Number(payment.amount), 0);
+
+      const pendingAmount = isPayer
+        ? 0
+        : payments
+            .filter(
+              (payment) =>
+                payment.from_person_id === person.id &&
+                payment.to_person_id === expense.paid_by &&
+                payment.status === "pending",
             )
             .reduce((total, payment) => total + Number(payment.amount), 0);
 
       const remaining = isPayer ? 0 : Math.max(shareAmount - paidAmount, 0);
 
+      const availableToSubmit = isPayer
+        ? 0
+        : Math.max(remaining - pendingAmount, 0);
+
+      const currentUserIsDebtor = selfPerson?.id === person.id;
+
+      const currentUserIsReceiver = selfPerson?.id === expense.paid_by;
+
       const canRecordPayment =
         !isPayer &&
-        remaining > 0 &&
-        (isGroupOwner ||
-          selfPerson?.id === person.id ||
-          selfPerson?.id === expense.paid_by);
+        availableToSubmit > 0 &&
+        (currentUserIsDebtor || currentUserIsReceiver);
+
+      const requiresConfirmation =
+        currentUserIsDebtor && !(group?.allow_debtor_self_confirm ?? false);
 
       return {
         person,
@@ -303,6 +322,9 @@ export default async function ExpenseDetailPage({
         remaining,
         isPayer,
         canRecordPayment,
+        pendingAmount,
+        availableToSubmit,
+        requiresConfirmation,
       };
     })
     .filter(
@@ -315,6 +337,8 @@ export default async function ExpenseDetailPage({
    * UI
    * ------------------------------------------
    */
+
+  const currentUserIsExpenseReceiver = selfPerson?.id === expense.paid_by;
 
   return (
     <main className="min-h-dvh bg-background text-foreground">
@@ -342,7 +366,7 @@ export default async function ExpenseDetailPage({
               <h2 className="text-lg font-bold">{expense.name}</h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                {formatDate(expense.expense_date)}
+                {formatDateOnly(expense.expense_date)}
               </p>
 
               {group && (
@@ -407,6 +431,9 @@ export default async function ExpenseDetailPage({
                   remaining={participant.remaining}
                   isPayer={participant.isPayer}
                   canRecordPayment={participant.canRecordPayment}
+                  pendingAmount={participant.pendingAmount}
+                  availableToSubmit={participant.availableToSubmit}
+                  requiresConfirmation={participant.requiresConfirmation}
                 />
               </div>
             ))}
@@ -513,6 +540,20 @@ export default async function ExpenseDetailPage({
 
                 const to = peopleMap.get(payment.to_person_id);
 
+                const statusLabel =
+                  payment.status === "confirmed"
+                    ? "Confirmed"
+                    : payment.status === "pending"
+                      ? "Pending confirmation"
+                      : "Rejected";
+
+                const amountClass =
+                  payment.status === "confirmed"
+                    ? "text-emerald-400"
+                    : payment.status === "pending"
+                      ? "text-amber-400"
+                      : "text-muted-foreground";
+
                 return (
                   <div
                     key={payment.id}
@@ -530,11 +571,13 @@ export default async function ExpenseDetailPage({
                         </p>
 
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {new Intl.DateTimeFormat("en-MY", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          }).format(new Date(payment.paid_at))}
+                          {formatTimestampDateMY(payment.paid_at)}
+                        </p>
+
+                        <p
+                          className={`mt-1 text-xs font-medium ${amountClass}`}
+                        >
+                          {statusLabel}
                         </p>
 
                         {payment.note && (
@@ -544,10 +587,18 @@ export default async function ExpenseDetailPage({
                         )}
                       </div>
 
-                      <p className="shrink-0 font-semibold text-emerald-400">
+                      <p className={`shrink-0 font-semibold ${amountClass}`}>
                         {formatMoney(Number(payment.amount))}
                       </p>
                     </div>
+
+                    {payment.status === "pending" &&
+                      currentUserIsExpenseReceiver && (
+                        <PaymentReviewActions
+                          kind="expense"
+                          paymentId={payment.id}
+                        />
+                      )}
                   </div>
                 );
               })}

@@ -12,13 +12,7 @@ import {
 } from "@/components/home/recent-activity";
 import { AppShell } from "@/components/layout/app-shell";
 import { createClient } from "@/lib/supabase/server";
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-MY", {
-    day: "numeric",
-    month: "short",
-  }).format(new Date(`${date}T00:00:00`));
-}
+import { formatDateOnly } from "@/lib/date-format";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -43,6 +37,8 @@ export default async function Home() {
 
   if (balanceError) {
     console.error("Failed to load dashboard balances:", balanceError);
+
+    throw new Error("Unable to load dashboard balances");
   }
 
   const balances = (peopleBalances ?? []).map((person) => ({
@@ -84,6 +80,7 @@ export default async function Home() {
 
   if (expenseError) {
     console.error("Failed to load recent expenses:", expenseError);
+    throw new Error("Unable to load recent expenses");
   }
 
   /*
@@ -102,6 +99,7 @@ export default async function Home() {
 
   if (iouError) {
     console.error("Failed to load recent IOUs:", iouError);
+    throw new Error("Unable to load recent IOUs");
   }
 
   /*
@@ -114,7 +112,7 @@ export default async function Home() {
     id: expense.id,
     type: "expense",
     title: expense.name,
-    date: formatDate(expense.expense_date),
+    date: formatDateOnly(expense.expense_date),
     amount: Number(expense.total_amount),
     createdAt: expense.created_at,
   }));
@@ -123,7 +121,7 @@ export default async function Home() {
     id: iou.id,
     type: "iou",
     title: iou.reason,
-    date: formatDate(iou.iou_date),
+    date: formatDateOnly(iou.iou_date),
     amount: Number(iou.amount),
     createdAt: iou.created_at,
   }));

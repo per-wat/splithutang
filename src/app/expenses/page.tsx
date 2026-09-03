@@ -11,13 +11,7 @@ import type { ExpenseStatus } from "@/components/expenses/expense-card";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { createClient } from "@/lib/supabase/server";
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-MY", {
-    day: "numeric",
-    month: "short",
-  }).format(new Date(`${date}T00:00:00`));
-}
+import { formatDateOnly } from "@/lib/date-format";
 
 function getExpenseStatus(status: string): ExpenseStatus {
   switch (status) {
@@ -68,7 +62,7 @@ export default async function ExpensesPage() {
   const expenses: ExpenseOverview[] = (data ?? []).map((expense) => ({
     id: expense.expense_id,
     title: expense.name,
-    date: formatDate(expense.expense_date),
+    date: formatDateOnly(expense.expense_date),
     paidBy: expense.paid_by_name,
     amount: Number(expense.total_amount),
     status: getExpenseStatus(expense.status),

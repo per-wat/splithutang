@@ -3,8 +3,10 @@ import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
 import { IouPaymentAction } from "@/components/ious/iou-payment-action";
-import { createClient } from "@/lib/supabase/server";
+import { PaymentReviewActions } from "@/components/payments/payment-review-actions";
 import { getPersonDisplayName } from "@/lib/person-display-name";
+import { createClient } from "@/lib/supabase/server";
+import { formatDateOnly, formatTimestampDateMY } from "@/lib/date-format";
 
 type IouDetailPageProps = {
   params: Promise<{
@@ -14,22 +16,6 @@ type IouDetailPageProps = {
 
 function formatMoney(amount: number) {
   return `RM ${amount.toFixed(2)}`;
-}
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-MY", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(`${date}T00:00:00`));
-}
-
-function formatPaymentDate(date: string) {
-  return new Intl.DateTimeFormat("en-MY", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(date));
 }
 
 export default async function IouDetailPage({ params }: IouDetailPageProps) {
@@ -46,8 +32,11 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
   }
 
   /*
+   * ------------------------------------------
    * IOU
+   * ------------------------------------------
    */
+
   const { data: iou, error: iouError } = await supabase
     .from("ious")
     .select(
@@ -70,18 +59,35 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
   }
 
   /*
-   * Related information.
+   * ------------------------------------------
+   * Related information
+   * ------------------------------------------
    */
+
   const [groupResult, peopleResult, paymentsResult] = await Promise.all([
     supabase
       .from("groups")
-      .select("id, name, owner_id")
+      .select(
+        `
+          id,
+          name,
+          owner_id,
+          allow_debtor_self_confirm
+        `,
+      )
       .eq("id", iou.group_id)
       .maybeSingle(),
 
     supabase
       .from("people")
-      .select("id, name, avatar_color, linked_user_id")
+      .select(
+        `
+          id,
+          name,
+          avatar_color,
+          linked_user_id
+        `,
+      )
       .in("id", [iou.from_person_id, iou.to_person_id]),
 
     supabase
@@ -93,7 +99,11 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
           to_person_id,
           amount,
           paid_at,
-          note
+          note,
+          status,
+          submitted_by_user_id,
+          resolved_by_user_id,
+          resolved_at
         `,
       )
       .eq("iou_id", iou.id)
@@ -108,6 +118,8 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
       people: peopleResult.error,
       payments: paymentsResult.error,
     });
+
+    throw new Error("Unable to load IOU details");
   }
 
   const group = groupResult.data;
@@ -115,6 +127,12 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
   const people = peopleResult.data ?? [];
 
   const payments = paymentsResult.data ?? [];
+
+  /*
+   * ------------------------------------------
+   * Debtor / creditor
+   * ------------------------------------------
+   */
 
   const debtor = people.find((person) => person.id === iou.from_person_id);
 
@@ -129,13 +147,33 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
   const creditorName = getPersonDisplayName(creditor, user.id);
 
   /*
-   * Calculate outstanding amount.
+   * ------------------------------------------
+   * Payment calculations
+   * ------------------------------------------
+   *
+   * Only CONFIRMED payments reduce the debt.
    */
+
   const paidAmount = payments
     .filter(
       (payment) =>
         payment.from_person_id === iou.from_person_id &&
-        payment.to_person_id === iou.to_person_id,
+        payment.to_person_id === iou.to_person_id &&
+        payment.status === "confirmed",
+    )
+    .reduce((total, payment) => total + Number(payment.amount), 0);
+
+  /*
+   * Pending payments reserve money but do not
+   * reduce the actual debt yet.
+   */
+
+  const pendingAmount = payments
+    .filter(
+      (payment) =>
+        payment.from_person_id === iou.from_person_id &&
+        payment.to_person_id === iou.to_person_id &&
+        payment.status === "pending",
     )
     .reduce((total, payment) => total + Number(payment.amount), 0);
 
@@ -143,22 +181,55 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
 
   const remaining = Math.max(originalAmount - paidAmount, 0);
 
+  /*
+   * Prevent another payment from being submitted
+   * for an amount already waiting for confirmation.
+   */
+  const availableToSubmit = Math.max(remaining - pendingAmount, 0);
+
   const settled = remaining <= 0;
 
   const hasPartialPayment = paidAmount > 0 && !settled;
 
+  const hasPendingPayment = pendingAmount > 0 && !settled;
+
   /*
-   * Determine current user's role.
+   * ------------------------------------------
+   * Current user's role
+   * ------------------------------------------
    */
+
   const selfPerson = people.find((person) => person.linked_user_id === user.id);
 
-  const isGroupOwner = group?.owner_id === user.id;
+  const currentUserIsDebtor = selfPerson?.id === debtor.id;
+
+  const currentUserIsCreditor = selfPerson?.id === creditor.id;
 
   const canRecordPayment =
     !settled &&
-    (isGroupOwner ||
-      selfPerson?.id === debtor.id ||
-      selfPerson?.id === creditor.id);
+    availableToSubmit > 0 &&
+    (currentUserIsDebtor || currentUserIsCreditor);
+
+  /*
+   * Debtor:
+   *
+   * Setting OFF
+   * → payment becomes pending.
+   *
+   * Setting ON
+   * → payment confirms immediately.
+   *
+   * Creditor:
+   * → always records confirmed payment.
+   */
+  const requiresConfirmation =
+    currentUserIsDebtor && !(group?.allow_debtor_self_confirm ?? false);
+
+  /*
+   * ------------------------------------------
+   * UI
+   * ------------------------------------------
+   */
 
   return (
     <main className="min-h-dvh bg-background text-foreground">
@@ -187,7 +258,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               <h2 className="text-lg font-bold">{iou.reason}</h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                {formatDate(iou.iou_date)}
+                {formatDateOnly(iou.iou_date)}
               </p>
 
               {group && (
@@ -217,6 +288,12 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               </p>
             )}
 
+            {pendingAmount > 0 && (
+              <p className="mt-1 text-xs font-medium text-amber-400">
+                RM {pendingAmount.toFixed(2)} pending confirmation
+              </p>
+            )}
+
             <div className="mt-4 flex items-center gap-2 text-sm">
               <span className="font-semibold">{debtorName}</span>
 
@@ -229,27 +306,32 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               className={`mt-2 text-xs font-medium ${
                 settled
                   ? "text-emerald-400"
-                  : hasPartialPayment
+                  : hasPendingPayment
                     ? "text-amber-400"
-                    : "text-red-400"
+                    : hasPartialPayment
+                      ? "text-amber-400"
+                      : "text-red-400"
               }`}
             >
               {settled
                 ? "Settled"
-                : hasPartialPayment
-                  ? "Partially paid"
-                  : "Unpaid"}
+                : hasPendingPayment
+                  ? "Payment pending"
+                  : hasPartialPayment
+                    ? "Partially paid"
+                    : "Unpaid"}
             </p>
           </div>
         </section>
 
-        {/* Balance breakdown */}
+        {/* Payment summary */}
         <section className="mt-7">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             Payment Summary
           </h2>
 
           <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-card">
+            {/* Original */}
             <div className="flex items-center justify-between px-4 py-3.5">
               <span className="text-sm text-muted-foreground">
                 Original amount
@@ -260,14 +342,29 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               </span>
             </div>
 
+            {/* Confirmed */}
             <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3.5">
-              <span className="text-sm text-muted-foreground">Paid</span>
+              <span className="text-sm text-muted-foreground">
+                Confirmed paid
+              </span>
 
               <span className="text-sm font-semibold text-emerald-400">
                 {formatMoney(paidAmount)}
               </span>
             </div>
 
+            {/* Pending */}
+            {pendingAmount > 0 && (
+              <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3.5">
+                <span className="text-sm text-muted-foreground">Pending</span>
+
+                <span className="text-sm font-semibold text-amber-400">
+                  {formatMoney(pendingAmount)}
+                </span>
+              </div>
+            )}
+
+            {/* Remaining */}
             <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3.5">
               <span className="text-sm font-medium">Remaining</span>
 
@@ -284,6 +381,8 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               debtorName={debtorName}
               creditorName={creditorName}
               remaining={remaining}
+              availableToSubmit={availableToSubmit}
+              requiresConfirmation={requiresConfirmation}
             />
           </div>
         )}
@@ -296,38 +395,68 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
             </h2>
 
             <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-card">
-              {payments.map((payment, index) => (
-                <div
-                  key={payment.id}
-                  className={`px-4 py-4 ${
-                    index !== payments.length - 1
-                      ? "border-b border-white/[0.06]"
-                      : ""
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-medium">
-                        {debtorName} → {creditorName}
-                      </p>
+              {payments.map((payment, index) => {
+                const statusLabel =
+                  payment.status === "confirmed"
+                    ? "Confirmed"
+                    : payment.status === "pending"
+                      ? "Pending confirmation"
+                      : "Rejected";
 
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {formatPaymentDate(payment.paid_at)}
-                      </p>
+                const amountClass =
+                  payment.status === "confirmed"
+                    ? "text-emerald-400"
+                    : payment.status === "pending"
+                      ? "text-amber-400"
+                      : "text-muted-foreground";
 
-                      {payment.note && (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {payment.note}
+                return (
+                  <div
+                    key={payment.id}
+                    className={`px-4 py-4 ${
+                      index !== payments.length - 1
+                        ? "border-b border-white/[0.06]"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {debtorName} → {creditorName}
                         </p>
-                      )}
+
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatTimestampDateMY(payment.paid_at)}
+                        </p>
+
+                        <p
+                          className={`mt-1 text-xs font-medium ${amountClass}`}
+                        >
+                          {statusLabel}
+                        </p>
+
+                        {payment.note && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {payment.note}
+                          </p>
+                        )}
+                      </div>
+
+                      <p className={`shrink-0 font-semibold ${amountClass}`}>
+                        {formatMoney(Number(payment.amount))}
+                      </p>
                     </div>
 
-                    <p className="shrink-0 font-semibold text-emerald-400">
-                      {formatMoney(Number(payment.amount))}
-                    </p>
+                    {/* Receiver reviews pending payment */}
+                    {payment.status === "pending" && currentUserIsCreditor && (
+                      <PaymentReviewActions
+                        kind="iou"
+                        paymentId={payment.id}
+                      />
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}

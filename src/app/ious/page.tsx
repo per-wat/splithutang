@@ -8,13 +8,7 @@ import type { IouStatus } from "@/components/ious/iou-card";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { createClient } from "@/lib/supabase/server";
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-MY", {
-    day: "numeric",
-    month: "short",
-  }).format(new Date(`${date}T00:00:00`));
-}
+import { formatDateOnly } from "@/lib/date-format";
 
 function getIouStatus(status: string): IouStatus {
   switch (status) {
@@ -65,7 +59,7 @@ export default async function IousPage() {
   const ious: IouOverview[] = (data ?? []).map((iou) => ({
     id: iou.iou_id,
     title: iou.reason,
-    date: formatDate(iou.iou_date),
+    date: formatDateOnly(iou.iou_date),
     from: iou.from_name,
     to: iou.to_name,
 
