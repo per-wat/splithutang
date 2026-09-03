@@ -5,6 +5,7 @@ import { ChangeEvent, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { ChangePasswordForm } from "@/components/profile/change-password-form";
 import { createClient } from "@/lib/supabase/client";
 
 const avatarColors = [
@@ -533,6 +534,14 @@ export function ProfileSettingsForm({
             <p className="mt-1 break-all text-sm font-semibold">{email}</p>
           </div>
         </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          Security
+        </h2>
+
+        <ChangePasswordForm email={email} />
       </section>
 
       {error && (
