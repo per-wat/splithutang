@@ -38,7 +38,13 @@ export default async function AddIouPage() {
 
   const { data: groups, error: groupsError } = await supabase
     .from("groups")
-    .select("id, name")
+    .select(
+      `
+      id,
+      name
+    `,
+    )
+    .is("archived_at", null)
     .order("name");
 
   if (groupsError) {
@@ -51,8 +57,14 @@ export default async function AddIouPage() {
     groupIds.length > 0
       ? await supabase
           .from("group_members")
-          .select("group_id, person_id")
+          .select(
+            `
+    group_id,
+    person_id
+  `,
+          )
           .in("group_id", groupIds)
+          .eq("membership_status", "active")
       : { data: [], error: null };
 
   if (membershipError) {

@@ -26,6 +26,7 @@ type GroupMemberManagerProps = {
   members: GroupMemberView[];
   candidates: GroupCandidateView[];
   isOwner: boolean;
+  isArchived: boolean;
 };
 
 export function GroupMemberManager({
@@ -33,6 +34,7 @@ export function GroupMemberManager({
   members,
   candidates,
   isOwner,
+  isArchived,
 }: GroupMemberManagerProps) {
   const router = useRouter();
 
@@ -174,7 +176,7 @@ export function GroupMemberManager({
       </div>
 
       {/* Owner controls */}
-      {isOwner && (
+      {isOwner && !isArchived && (
         <div className="mt-5 space-y-4">
           {/* Existing people */}
           {candidates.length > 0 && (
@@ -244,6 +246,16 @@ export function GroupMemberManager({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {isOwner && isArchived && (
+        <div className="mt-5 rounded-2xl border border-amber-500/20 bg-amber-500/[0.07] p-4">
+          <p className="text-sm font-semibold text-amber-400">Group archived</p>
+
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Restore this group before adding new members or local contacts.
+          </p>
         </div>
       )}
 

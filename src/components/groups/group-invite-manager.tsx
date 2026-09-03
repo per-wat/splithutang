@@ -38,6 +38,8 @@ type GroupInviteManagerProps = {
   localMembers: LocalGroupMemberOption[];
 
   invites: GroupInviteView[];
+
+  isArchived: boolean;
 };
 
 function getStatusClasses(status: string) {
@@ -63,6 +65,7 @@ export function GroupInviteManager({
   groupId,
   localMembers,
   invites,
+  isArchived,
 }: GroupInviteManagerProps) {
   const router = useRouter();
 
@@ -187,7 +190,17 @@ export function GroupInviteManager({
   return (
     <div className="space-y-5">
       {/* Create invitation */}
-      {localMembers.length > 0 ? (
+      {isArchived ? (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.07] p-4">
+          <p className="text-sm font-semibold text-amber-400">
+            Invitations paused
+          </p>
+
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Restore this group before creating new invitations.
+          </p>
+        </div>
+      ) : localMembers.length > 0 ? (
         <div className="rounded-2xl border border-white/[0.08] bg-card p-4">
           <div className="flex items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-purple-500/10">
