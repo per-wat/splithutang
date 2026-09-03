@@ -7,6 +7,7 @@ import { PaymentReviewActions } from "@/components/payments/payment-review-actio
 import { getPersonDisplayName } from "@/lib/person-display-name";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly, formatTimestampDateMY } from "@/lib/date-format";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 type IouDetailPageProps = {
   params: Promise<{
@@ -80,14 +81,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
 
     supabase
       .from("people")
-      .select(
-        `
-          id,
-          name,
-          avatar_color,
-          linked_user_id
-        `,
-      )
+      .select("id, name, avatar_color, avatar_path, linked_user_id")
       .in("id", [iou.from_person_id, iou.to_person_id]),
 
     supabase
@@ -294,12 +288,34 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               </p>
             )}
 
-            <div className="mt-4 flex items-center gap-2 text-sm">
-              <span className="font-semibold">{debtorName}</span>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <ProfileAvatar
+                  name={debtorName}
+                  avatarColor={debtor.avatar_color ?? "bg-blue-600"}
+                  avatarPath={debtor.avatar_path}
+                  className="size-8 text-xs"
+                />
 
-              <ArrowRight className="size-4 text-muted-foreground" />
+                <span className="truncate text-sm font-semibold">
+                  {debtorName}
+                </span>
+              </div>
 
-              <span className="font-semibold">{creditorName}</span>
+              <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+
+              <div className="flex min-w-0 items-center gap-2">
+                <ProfileAvatar
+                  name={creditorName}
+                  avatarColor={creditor.avatar_color ?? "bg-blue-600"}
+                  avatarPath={creditor.avatar_path}
+                  className="size-8 text-xs"
+                />
+
+                <span className="truncate text-sm font-semibold">
+                  {creditorName}
+                </span>
+              </div>
             </div>
 
             <p

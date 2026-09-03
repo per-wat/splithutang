@@ -1,8 +1,12 @@
-import { UserRound } from "lucide-react";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 type PersonCardProps = {
   name: string;
   balance: number;
+
+  avatarColor: string;
+
+  avatarPath?: string | null;
 };
 
 function formatCurrency(amount: number) {
@@ -11,15 +15,24 @@ function formatCurrency(amount: number) {
   return `RM ${absoluteAmount.toFixed(2)}`;
 }
 
-export function PersonCard({ name, balance }: PersonCardProps) {
+export function PersonCard({
+  name,
+  balance,
+  avatarColor,
+  avatarPath,
+}: PersonCardProps) {
   const isPositive = balance > 0;
+
   const isSettled = balance === 0;
 
   return (
     <div className="flex items-center gap-3 px-4 py-4">
-      <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/[0.08]">
-        <UserRound className="size-5 text-muted-foreground" />
-      </div>
+      <ProfileAvatar
+        name={name}
+        avatarColor={avatarColor}
+        avatarPath={avatarPath}
+        className="size-11 text-sm"
+      />
 
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{name}</p>
@@ -48,6 +61,7 @@ export function PersonCard({ name, balance }: PersonCardProps) {
           }`}
         >
           {isSettled ? "" : isPositive ? "+" : "-"}
+
           {formatCurrency(balance)}
         </p>
       </div>

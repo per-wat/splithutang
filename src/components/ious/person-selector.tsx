@@ -1,10 +1,14 @@
 "use client";
 
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
+
 export type Person = {
   id: string;
   name: string;
   initial: string;
   color: string;
+
+  avatarPath: string | null;
 };
 
 type PersonSelectorProps = {
@@ -34,11 +38,12 @@ export function PersonSelector({
                 : "border-white/[0.08] bg-white/[0.03] text-foreground hover:bg-white/[0.06]"
             }`}
           >
-            <span
-              className={`flex size-8 items-center justify-center rounded-full text-sm font-semibold text-white ${person.color}`}
-            >
-              {person.initial}
-            </span>
+            <ProfileAvatar
+              name={person.name}
+              avatarColor={person.color}
+              avatarPath={person.avatarPath}
+              className="size-8 text-sm"
+            />
 
             <span className="text-sm font-medium">{person.name}</span>
           </button>

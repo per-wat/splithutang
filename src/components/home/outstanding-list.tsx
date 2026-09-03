@@ -1,7 +1,13 @@
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
+
 export type OutstandingPerson = {
   id: string;
   name: string;
   amount: number;
+
+  avatarColor: string;
+
+  avatarPath: string | null;
 };
 
 type OutstandingListProps = {
@@ -36,10 +42,21 @@ export function OutstandingList({ people }: OutstandingListProps) {
                   : ""
               }`}
             >
-              <div>
-                <p className="font-medium">{person.name}</p>
+              <div className="flex min-w-0 items-center gap-3">
+                <ProfileAvatar
+                  name={person.name}
+                  avatarColor={person.avatarColor}
+                  avatarPath={person.avatarPath}
+                  className="size-10 text-sm"
+                />
 
-                <p className="mt-0.5 text-xs text-muted-foreground">owes you</p>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{person.name}</p>
+
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    owes you
+                  </p>
+                </div>
               </div>
 
               <p className="font-semibold text-emerald-400">

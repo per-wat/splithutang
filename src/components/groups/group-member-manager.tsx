@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 export type GroupMemberView = {
   id: string;
@@ -14,6 +15,7 @@ export type GroupMemberView = {
   role: "owner" | "member";
   isSelf: boolean;
   isLinked: boolean;
+  avatarPath: string | null;
 };
 
 export type GroupCandidateView = {
@@ -142,11 +144,12 @@ export function GroupMemberManager({
               index !== members.length - 1 ? "border-b border-white/[0.06]" : ""
             }`}
           >
-            <div
-              className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${member.color}`}
-            >
-              {member.initial}
-            </div>
+            <ProfileAvatar
+              name={member.name}
+              avatarColor={member.color}
+              avatarPath={member.avatarPath}
+              className="size-10 text-sm"
+            />
 
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold">{member.name}</p>

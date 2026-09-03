@@ -114,6 +114,7 @@ export default async function GroupDetailPage({
               id,
               name,
               avatar_color,
+              avatar_path,
               linked_user_id
             `,
           )
@@ -173,6 +174,8 @@ export default async function GroupDetailPage({
 
         color:
           person.avatar_color ?? fallbackColors[index % fallbackColors.length],
+
+        avatarPath: person.avatar_path,
 
         role: membership.role,
 
@@ -238,6 +241,7 @@ export default async function GroupDetailPage({
         id,
         name,
         avatar_color,
+        avatar_path,
         linked_user_id
       `,
     )

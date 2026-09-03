@@ -10,6 +10,10 @@ export type PersonWithBalance = {
   id: string;
   name: string;
   balance: number;
+
+  avatarColor: string;
+
+  avatarPath: string | null;
 };
 
 type PeopleListProps = {
@@ -58,6 +62,8 @@ export function PeopleList({ people }: PeopleListProps) {
                 <PersonCard
                   name={person.name}
                   balance={person.balance}
+                  avatarColor={person.avatarColor}
+                  avatarPath={person.avatarPath}
                 />
               </Link>
             </div>

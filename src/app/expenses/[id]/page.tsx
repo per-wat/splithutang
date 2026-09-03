@@ -222,6 +222,7 @@ export default async function ExpenseDetailPage({
           id,
           name,
           avatar_color,
+          avatar_path,
           linked_user_id
         `,
     )
@@ -425,6 +426,7 @@ export default async function ExpenseDetailPage({
                   person={{
                     ...participant.person,
                     name: participant.person.displayName,
+                    avatarPath: participant.person.avatar_path,
                   }}
                   shareAmount={participant.shareAmount}
                   paidAmount={participant.paidAmount}

@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Trash2, X } from "lucide-react";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 import type { Person } from "./expense-people-selector";
 
@@ -112,13 +113,22 @@ export function ExpenseItemEditor({
                 key={person.id}
                 type="button"
                 onClick={() => onTogglePerson(item.id, person.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 rounded-full px-2 py-1.5 pr-3 text-xs font-semibold transition-colors ${
                   active
                     ? "bg-blue-600 text-white"
                     : "bg-white/[0.06] text-muted-foreground hover:bg-white/[0.1]"
                 }`}
               >
-                {person.name}
+                <>
+                  <ProfileAvatar
+                    name={person.name}
+                    avatarColor={person.color}
+                    avatarPath={person.avatarPath}
+                    className="size-5 text-[9px]"
+                  />
+
+                  {person.name}
+                </>
               </button>
             );
           })}

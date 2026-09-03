@@ -12,6 +12,7 @@ type PersonOption = {
   name: string;
   initial: string;
   color: string;
+  avatarPath: string | null;
   isSelf: boolean;
 };
 

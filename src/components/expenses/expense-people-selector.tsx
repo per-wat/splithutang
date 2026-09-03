@@ -1,12 +1,14 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 export type Person = {
   id: string;
   name: string;
   initial: string;
   color: string;
+  avatarPath: string | null;
   isSelf: boolean;
 };
 
@@ -39,11 +41,12 @@ export function ExpensePeopleSelector({
             disabled={person.id === personPaying}
           >
             <div className="flex items-center gap-3">
-              <span
-                className={`flex size-9 items-center justify-center rounded-full text-sm font-bold text-white ${person.color}`}
-              >
-                {person.initial}
-              </span>
+              <ProfileAvatar
+                name={person.name}
+                avatarColor={person.color}
+                avatarPath={person.avatarPath}
+                className="size-9 text-sm"
+              />
 
               <span className="text-sm font-semibold">{person.name}</span>
               {person.id === personPaying && (

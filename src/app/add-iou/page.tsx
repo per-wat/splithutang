@@ -21,6 +21,7 @@ export type IouGroupOption = {
     name: string;
     initial: string;
     color: string;
+    avatarPath: string | null;
     isSelf: boolean;
   }[];
 };
@@ -59,9 +60,9 @@ export default async function AddIouPage() {
           .from("group_members")
           .select(
             `
-    group_id,
-    person_id
-  `,
+              group_id,
+              person_id
+            `,
           )
           .in("group_id", groupIds)
           .eq("membership_status", "active")
@@ -79,7 +80,7 @@ export default async function AddIouPage() {
     personIds.length > 0
       ? await supabase
           .from("people")
-          .select("id, name, linked_user_id")
+          .select(`id,name,avatar_color,avatar_path,linked_user_id`)
           .in("id", personIds)
       : { data: [], error: null };
 
@@ -102,7 +103,10 @@ export default async function AddIouPage() {
 
           initial: person.name.trim().charAt(0).toUpperCase() || "?",
 
-          color: avatarColors[index % avatarColors.length],
+          color:
+            person.avatar_color ?? avatarColors[index % avatarColors.length],
+
+          avatarPath: person.avatar_path,
 
           isSelf,
         },

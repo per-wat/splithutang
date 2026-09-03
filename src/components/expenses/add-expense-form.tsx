@@ -12,6 +12,7 @@ import {
 } from "./expense-item-editor";
 
 import { ExpensePeopleSelector, type Person } from "./expense-people-selector";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 export type ExpenseGroupOption = {
   id: string;
@@ -539,11 +540,12 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
                     : "border-border bg-card hover:bg-white/[0.04]"
                 }`}
               >
-                <span
-                  className={`flex size-8 items-center justify-center rounded-full text-sm font-bold text-white ${person.color}`}
-                >
-                  {person.initial}
-                </span>
+                <ProfileAvatar
+                  name={person.name}
+                  avatarColor={person.color}
+                  avatarPath={person.avatarPath}
+                  className="size-8 text-sm"
+                />
 
                 <span className="text-sm font-medium">{person.name}</span>
               </button>
@@ -638,11 +640,12 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span
-                      className={`flex size-9 items-center justify-center rounded-full text-sm font-bold text-white ${person.color}`}
-                    >
-                      {person.initial}
-                    </span>
+                    <ProfileAvatar
+                      name={person.name}
+                      avatarColor={person.color}
+                      avatarPath={person.avatarPath}
+                      className="size-9 text-sm"
+                    />
 
                     <span className="text-sm font-semibold">{person.name}</span>
                   </div>
@@ -675,11 +678,12 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span
-                    className={`flex size-9 items-center justify-center rounded-full text-sm font-bold text-white ${person.color}`}
-                  >
-                    {person.initial}
-                  </span>
+                  <ProfileAvatar
+                    name={person.name}
+                    avatarColor={person.color}
+                    avatarPath={person.avatarPath}
+                    className="size-9 text-sm"
+                  />
 
                   <span className="text-sm font-semibold">{person.name}</span>
                 </div>

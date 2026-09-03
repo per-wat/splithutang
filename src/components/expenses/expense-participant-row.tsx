@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { RecordPaymentForm } from "./record-payment-form";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 type ExpenseParticipantRowProps = {
   expenseId: string;
@@ -12,6 +13,7 @@ type ExpenseParticipantRowProps = {
     name: string;
     initial: string;
     color: string;
+    avatarPath: string | null;
   };
 
   shareAmount: number;
@@ -45,11 +47,12 @@ export function ExpenseParticipantRow({
     <>
       <div className="px-4 py-4">
         <div className="flex items-start gap-3">
-          <div
-            className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${person.color}`}
-          >
-            {person.initial}
-          </div>
+          <ProfileAvatar
+            name={person.name}
+            avatarColor={person.color}
+            avatarPath={person.avatarPath}
+            className="size-10 text-sm"
+          />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">

@@ -50,9 +50,9 @@ export default async function AddExpensePage() {
           .from("group_members")
           .select(
             `
-    group_id,
-    person_id
-  `,
+              group_id,
+              person_id
+            `,
           )
           .in("group_id", groupIds)
           .eq("membership_status", "active")
@@ -70,7 +70,7 @@ export default async function AddExpensePage() {
     personIds.length > 0
       ? await supabase
           .from("people")
-          .select("id, name, avatar_color, linked_user_id")
+          .select("id, name, avatar_color, avatar_path, linked_user_id")
           .in("id", personIds)
       : { data: [], error: null };
 
@@ -98,6 +98,8 @@ export default async function AddExpensePage() {
             fallbackColors[index % fallbackColors.length],
 
           isSelf,
+
+          avatarPath: person.avatar_path,
         },
       ];
     }),

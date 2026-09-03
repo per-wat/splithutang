@@ -27,6 +27,46 @@ export default async function Home() {
 
   /*
    * ------------------------------------------
+   * Profile
+   * ------------------------------------------
+   */
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select(
+      `
+      display_name,
+      avatar_color,
+      avatar_path
+    `,
+    )
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("Failed to load profile:", profileError);
+  }
+
+  const displayName =
+    profile?.display_name ??
+    user.user_metadata?.display_name ??
+    user.email?.split("@")[0] ??
+    "You";
+
+  const avatarColor = profile?.avatar_color ?? "bg-blue-600";
+
+  let avatarUrl: string | null = null;
+
+  if (profile?.avatar_path) {
+    const { data } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(profile.avatar_path);
+
+    avatarUrl = data.publicUrl;
+  }
+
+  /*
+   * ------------------------------------------
    * Balances
    * ------------------------------------------
    */
@@ -41,11 +81,50 @@ export default async function Home() {
     throw new Error("Unable to load dashboard balances");
   }
 
-  const balances = (peopleBalances ?? []).map((person) => ({
-    id: person.person_id,
-    name: person.name,
-    balance: Number(person.balance ?? 0),
-  }));
+  const balancePersonIds = (peopleBalances ?? []).map(
+    (person) => person.person_id,
+  );
+
+  const { data: balanceAvatars, error: balanceAvatarError } =
+    balancePersonIds.length > 0
+      ? await supabase
+          .from("people")
+          .select(
+            `
+            id,
+            avatar_color,
+            avatar_path
+          `,
+          )
+          .in("id", balancePersonIds)
+      : {
+          data: [],
+          error: null,
+        };
+
+  if (balanceAvatarError) {
+    console.error("Failed to load dashboard avatars:", balanceAvatarError);
+  }
+
+  const balanceAvatarMap = new Map(
+    (balanceAvatars ?? []).map((person) => [person.id, person]),
+  );
+
+  const balances = (peopleBalances ?? []).map((person) => {
+    const avatar = balanceAvatarMap.get(person.person_id);
+
+    return {
+      id: person.person_id,
+
+      name: person.name,
+
+      balance: Number(person.balance ?? 0),
+
+      avatarColor: avatar?.avatar_color ?? "bg-blue-600",
+
+      avatarPath: avatar?.avatar_path ?? null,
+    };
+  });
 
   const owedToYou = balances
     .filter((person) => person.balance > 0)
@@ -59,8 +138,14 @@ export default async function Home() {
     .filter((person) => person.balance > 0)
     .map((person) => ({
       id: person.id,
+
       name: person.name,
+
       amount: person.balance,
+
+      avatarColor: person.avatarColor,
+
+      avatarPath: person.avatarPath,
     }))
     .sort((a, b) => b.amount - a.amount);
 
@@ -135,7 +220,11 @@ export default async function Home() {
 
   return (
     <AppShell>
-      <HomeHeader />
+      <HomeHeader
+        displayName={displayName}
+        avatarColor={avatarColor}
+        avatarUrl={avatarUrl}
+      />
 
       <BalanceSummary
         owedToYou={owedToYou}

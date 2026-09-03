@@ -10,6 +10,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly, formatTimestampDateMY } from "@/lib/date-format";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 type PersonDetailPageProps = {
   params: Promise<{
@@ -54,13 +55,13 @@ export default async function PersonDetailPage({
   const [targetResult, selfResult, balancesResult] = await Promise.all([
     supabase
       .from("people")
-      .select("id, name, avatar_color, linked_user_id")
+      .select("id, name, avatar_color, avatar_path, linked_user_id")
       .eq("id", id)
       .maybeSingle(),
 
     supabase
       .from("people")
-      .select("id, name, avatar_color, linked_user_id")
+      .select("id, name, avatar_color, avatar_path, linked_user_id")
       .eq("linked_user_id", user.id)
       .limit(1)
       .maybeSingle(),
@@ -422,8 +423,6 @@ export default async function PersonDetailPage({
     target.avatar_color ??
     fallbackColors[target.name.length % fallbackColors.length];
 
-  const targetInitial = target.name.trim().charAt(0).toUpperCase() || "?";
-
   /*
    * ------------------------------------------
    * Net balance presentation
@@ -463,11 +462,12 @@ export default async function PersonDetailPage({
         {/* Person summary */}
         <section className="mt-3 rounded-2xl border border-white/[0.08] bg-card p-5">
           <div className="flex items-center gap-4">
-            <div
-              className={`flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${targetColor}`}
-            >
-              {targetInitial}
-            </div>
+            <ProfileAvatar
+              name={target.name}
+              avatarColor={targetColor}
+              avatarPath={target.avatar_path}
+              className="size-14 text-lg"
+            />
 
             <div className="min-w-0">
               <h2 className="truncate text-xl font-bold">{target.name}</h2>
