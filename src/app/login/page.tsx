@@ -1,17 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+import { createClient } from "@/lib/supabase/client";
+
+function getSafeNext(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+
+  return value;
+}
+
+function LoginForm() {
   const router = useRouter();
-  const supabase = createClient();
+
+  const searchParams = useSearchParams();
+
+  const supabase = useMemo(() => createClient(), []);
+
+  const nextPath = getSafeNext(searchParams.get("next"));
+
+  const signupHref =
+    nextPath === "/"
+      ? "/signup"
+      : `/signup?next=${encodeURIComponent(nextPath)}`;
 
   const [email, setEmail] = useState("");
+
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
+
   const [loading, setLoading] = useState(false);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -21,22 +43,25 @@ export default function LoginPage() {
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
+
       password,
     });
 
     if (error) {
       setError(error.message);
+
       setLoading(false);
       return;
     }
 
-    router.push("/");
+    router.push(nextPath);
+
     router.refresh();
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
+    <main className="flex min-h-dvh items-center justify-center bg-background p-6 text-foreground">
       <form
         onSubmit={handleLogin}
         className="w-full max-w-sm space-y-4"
@@ -47,6 +72,12 @@ export default function LoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Sign in to continue
           </p>
+
+          {nextPath.startsWith("/invite/") && (
+            <p className="mt-2 text-xs text-blue-400">
+              Sign in to continue with your group invitation.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -63,6 +94,7 @@ export default function LoginPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
+            autoComplete="email"
             className="w-full rounded-md border bg-background px-3 py-2"
           />
         </div>
@@ -81,6 +113,7 @@ export default function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
+            autoComplete="current-password"
             className="w-full rounded-md border bg-background px-3 py-2"
           />
         </div>
@@ -98,7 +131,7 @@ export default function LoginPage() {
         <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
           <Link
-            href="/signup"
+            href={signupHref}
             className="font-medium text-foreground underline underline-offset-4"
           >
             Create account
@@ -106,5 +139,19 @@ export default function LoginPage() {
         </p>
       </form>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-dvh items-center justify-center bg-background text-foreground">
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </main>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

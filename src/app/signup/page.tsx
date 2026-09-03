@@ -1,15 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 
-export default function SignupPage() {
+function getSafeNext(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+
+  return value;
+}
+
+function SignupForm() {
   const router = useRouter();
 
+  const searchParams = useSearchParams();
+
   const supabase = useMemo(() => createClient(), []);
+
+  const nextPath = getSafeNext(searchParams.get("next"));
+
+  const loginHref =
+    nextPath === "/" ? "/login" : `/login?next=${encodeURIComponent(nextPath)}`;
 
   const [displayName, setDisplayName] = useState("");
 
@@ -30,6 +45,7 @@ export default function SignupPage() {
 
     if (!cleanName) {
       setError("Please enter your name.");
+
       return;
     }
 
@@ -39,6 +55,7 @@ export default function SignupPage() {
 
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
+
       password,
 
       options: {
@@ -50,18 +67,29 @@ export default function SignupPage() {
 
     if (error) {
       setError(error.message);
+
       setLoading(false);
       return;
     }
 
+    /*
+     * Email confirmation disabled:
+     *
+     * Supabase gives us a session
+     * immediately.
+     */
     if (data.session) {
-      router.push("/");
+      router.push(nextPath);
+
       router.refresh();
       return;
     }
 
+    /*
+     * Email confirmation enabled.
+     */
     setSuccess(
-      "Account created. Check your email to confirm your account, then sign in.",
+      "Account created. Confirm your email, then sign in to continue.",
     );
 
     setLoading(false);
@@ -77,6 +105,12 @@ export default function SignupPage() {
           <h1 className="text-2xl font-semibold">Create account</h1>
 
           <p className="mt-1 text-sm text-muted-foreground">Join SplitHutang</p>
+
+          {nextPath.startsWith("/invite/") && (
+            <p className="mt-2 text-xs text-blue-400">
+              Create your account to accept the group invitation.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -139,7 +173,18 @@ export default function SignupPage() {
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
-        {success && <p className="text-sm text-emerald-400">{success}</p>}
+        {success && (
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+            <p className="text-sm text-emerald-400">{success}</p>
+
+            <Link
+              href={loginHref}
+              className="mt-2 inline-block text-sm font-semibold text-foreground underline underline-offset-4"
+            >
+              Go to Sign In
+            </Link>
+          </div>
+        )}
 
         <button
           type="submit"
@@ -152,7 +197,7 @@ export default function SignupPage() {
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
-            href="/login"
+            href={loginHref}
             className="font-medium text-foreground underline underline-offset-4"
           >
             Sign in
@@ -160,5 +205,19 @@ export default function SignupPage() {
         </p>
       </form>
     </main>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-dvh items-center justify-center bg-background text-foreground">
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </main>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   );
 }

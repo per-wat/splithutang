@@ -97,7 +97,9 @@ export function BottomNav() {
         <div className="mx-auto flex h-20 max-w-md items-center justify-around px-2">
           {navItems.slice(0, 2).map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href ||
+              (item.href === "/people" && pathname.startsWith("/groups"));
 
             return (
               <Link
@@ -143,7 +145,9 @@ export function BottomNav() {
 
           {navItems.slice(2).map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href ||
+              (item.href === "/people" && pathname.startsWith("/groups"));
 
             return (
               <Link
