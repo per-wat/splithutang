@@ -16,7 +16,14 @@ type PersonDetailPageProps = {
   params: Promise<{
     id: string;
   }>;
+  searchParams: Promise<{
+    expenses?: string;
+    ious?: string;
+    payments?: string;
+  }>;
 };
+
+const PAGE_SIZE = 30;
 
 const fallbackColors = [
   "bg-blue-600",
@@ -31,10 +38,87 @@ function formatMoney(amount: number) {
   return `RM ${amount.toFixed(2)}`;
 }
 
+function parsePage(value: string | undefined) {
+  const page = Number.parseInt(value ?? "1", 10);
+  return Number.isFinite(page) && page > 0 ? page : 1;
+}
+
+function buildPersonHref(
+  personId: string,
+  pages: {
+    expenses: number;
+    ious: number;
+    payments: number;
+  },
+) {
+  const query = new URLSearchParams();
+
+  if (pages.expenses > 1) query.set("expenses", String(pages.expenses));
+  if (pages.ious > 1) query.set("ious", String(pages.ious));
+  if (pages.payments > 1) query.set("payments", String(pages.payments));
+
+  const search = query.toString();
+  return `/people/${personId}${search ? `?${search}` : ""}`;
+}
+
+type HistoryPaginationProps = {
+  currentPage: number;
+  totalCount: number;
+  hrefForPage: (page: number) => string;
+};
+
+function HistoryPagination({
+  currentPage,
+  totalCount,
+  hrefForPage,
+}: HistoryPaginationProps) {
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="mt-3 flex items-center justify-between gap-3">
+      {currentPage > 1 ? (
+        <Link
+          href={hrefForPage(currentPage - 1)}
+          scroll={false}
+          className="rounded-xl border border-white/[0.08] bg-card px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Previous
+        </Link>
+      ) : (
+        <span />
+      )}
+
+      <span className="text-xs text-muted-foreground">
+        Page {currentPage} of {totalPages}
+      </span>
+
+      {currentPage < totalPages ? (
+        <Link
+          href={hrefForPage(currentPage + 1)}
+          scroll={false}
+          className="rounded-xl border border-white/[0.08] bg-card px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Next
+        </Link>
+      ) : (
+        <span />
+      )}
+    </div>
+  );
+}
+
 export default async function PersonDetailPage({
   params,
+  searchParams,
 }: PersonDetailPageProps) {
   const { id } = await params;
+  const query = await searchParams;
+
+  const expensePage = parsePage(query.expenses);
+  const iouPage = parsePage(query.ious);
+  const paymentPage = parsePage(query.payments);
 
   const supabase = await createClient();
 
@@ -52,7 +136,14 @@ export default async function PersonDetailPage({
    * ------------------------------------------
    */
 
-  const [targetResult, selfResult, balancesResult] = await Promise.all([
+  const [
+    targetResult,
+    selfResult,
+    balancesResult,
+    expensesResult,
+    iousResult,
+    paymentsResult,
+  ] = await Promise.all([
     supabase
       .from("people")
       .select("id, name, avatar_color, avatar_path, linked_user_id")
@@ -67,6 +158,24 @@ export default async function PersonDetailPage({
       .maybeSingle(),
 
     supabase.rpc("get_people_balances"),
+
+    supabase.rpc("get_person_shared_expenses", {
+      p_person_id: id,
+      p_limit: PAGE_SIZE,
+      p_offset: (expensePage - 1) * PAGE_SIZE,
+    }),
+
+    supabase.rpc("get_person_ious", {
+      p_person_id: id,
+      p_limit: PAGE_SIZE,
+      p_offset: (iouPage - 1) * PAGE_SIZE,
+    }),
+
+    supabase.rpc("get_person_payment_history", {
+      p_person_id: id,
+      p_limit: PAGE_SIZE,
+      p_offset: (paymentPage - 1) * PAGE_SIZE,
+    }),
   ]);
 
   if (balancesResult.error) {
@@ -88,6 +197,21 @@ export default async function PersonDetailPage({
     notFound();
   }
 
+  if (expensesResult.error) {
+    console.error("Unable to load shared expenses:", expensesResult.error);
+    throw new Error("Unable to load shared expenses");
+  }
+
+  if (iousResult.error) {
+    console.error("Unable to load direct IOUs:", iousResult.error);
+    throw new Error("Unable to load direct IOUs");
+  }
+
+  if (paymentsResult.error) {
+    console.error("Unable to load payment history:", paymentsResult.error);
+    throw new Error("Unable to load payment history");
+  }
+
   const target = targetResult.data;
   const self = selfResult.data;
 
@@ -104,314 +228,39 @@ export default async function PersonDetailPage({
 
   const netBalance = Number(balanceRow?.balance ?? 0);
 
-  /*
-   * ------------------------------------------
-   * Shared expense participation
-   * ------------------------------------------
-   */
+  const expenses = (expensesResult.data ?? []).map((expense) => ({
+    id: expense.expense_id,
+    name: expense.name,
+    expenseDate: expense.expense_date,
+    totalAmount: Number(expense.total_amount),
+    paidBy: expense.paid_by,
+    selfShare: Number(expense.self_share),
+    targetShare: Number(expense.target_share),
+    targetPaidSelf: Number(expense.target_paid_self),
+    selfPaidTarget: Number(expense.self_paid_target),
+  }));
 
-  const { data: participantRows, error: participantError } = await supabase
-    .from("expense_participants")
-    .select(
-      `
-        expense_id,
-        person_id,
-        share_amount
-      `,
-    )
-    .in("person_id", [self.id, target.id]);
+  const ious = (iousResult.data ?? []).map((iou) => ({
+    id: iou.iou_id,
+    reason: iou.reason,
+    iouDate: iou.iou_date,
+    originalAmount: Number(iou.original_amount),
+    paidAmount: Number(iou.paid_amount),
+    fromPersonId: iou.from_person_id,
+  }));
 
-  if (participantError) {
-    console.error(
-      "Unable to load shared expense participants:",
-      participantError,
-    );
-    throw new Error("Unable to load shared expense participants");
-  }
+  const paymentHistory = (paymentsResult.data ?? []).map((payment) => ({
+    id: `${payment.payment_type}-${payment.payment_id}`,
+    amount: Number(payment.amount),
+    paidAt: payment.paid_at,
+    note: payment.note,
+    fromPersonId: payment.from_person_id,
+    context: payment.context,
+  }));
 
-  const participantData = participantRows ?? [];
-
-  /*
-   * Find expense IDs containing BOTH people.
-   */
-  const participationMap = new Map<string, Set<string>>();
-
-  for (const row of participantData) {
-    const existing = participationMap.get(row.expense_id) ?? new Set<string>();
-
-    existing.add(row.person_id);
-
-    participationMap.set(row.expense_id, existing);
-  }
-
-  const sharedExpenseIds = [...participationMap.entries()]
-    .filter(([, people]) => people.has(self.id) && people.has(target.id))
-    .map(([expenseId]) => expenseId);
-
-  let expenses: {
-    id: string;
-    name: string;
-    expense_date: string;
-    total_amount: number;
-    paid_by: string;
-    group_id: string;
-    created_at: string;
-  }[] = [];
-
-  let expensePayments: {
-    id: string;
-    expense_id: string;
-    from_person_id: string;
-    to_person_id: string;
-    amount: number;
-    paid_at: string;
-    note: string | null;
-    status: "pending" | "confirmed" | "rejected";
-  }[] = [];
-
-  if (sharedExpenseIds.length > 0) {
-    const [expensesResult, expensePaymentsResult] = await Promise.all([
-      supabase
-        .from("expenses")
-        .select(
-          `
-            id,
-            name,
-            expense_date,
-            total_amount,
-            paid_by,
-            group_id,
-            created_at
-          `,
-        )
-        .in("id", sharedExpenseIds)
-        .order("expense_date", {
-          ascending: false,
-        }),
-
-      supabase
-        .from("expense_payments")
-        .select(
-          `
-            id,
-            expense_id,
-            from_person_id,
-            to_person_id,
-            amount,
-            paid_at,
-            note,
-            status
-          `,
-        )
-        .in("expense_id", sharedExpenseIds)
-        .order("paid_at", {
-          ascending: false,
-        }),
-    ]);
-
-    if (expensesResult.error) {
-      console.error("Unable to load shared expenses:", expensesResult.error);
-      throw new Error("Unable to load shared expenses");
-    }
-
-    if (expensePaymentsResult.error) {
-      console.error(
-        "Unable to load expense payments:",
-        expensePaymentsResult.error,
-      );
-      throw new Error("Unable to load expense payments");
-    }
-
-    expenses = (expensesResult.data ?? []).map((expense) => ({
-      ...expense,
-      total_amount: Number(expense.total_amount),
-    }));
-
-    expensePayments = (expensePaymentsResult.data ?? []).map((payment) => ({
-      ...payment,
-      amount: Number(payment.amount),
-    }));
-  }
-
-  /*
-   * ------------------------------------------
-   * Direct IOUs between the two people
-   * ------------------------------------------
-   */
-
-  const [selfToTargetResult, targetToSelfResult] = await Promise.all([
-    supabase
-      .from("ious")
-      .select(
-        `
-          id,
-          reason,
-          iou_date,
-          amount,
-          from_person_id,
-          to_person_id,
-          group_id,
-          created_at
-        `,
-      )
-      .eq("from_person_id", self.id)
-      .eq("to_person_id", target.id),
-
-    supabase
-      .from("ious")
-      .select(
-        `
-          id,
-          reason,
-          iou_date,
-          amount,
-          from_person_id,
-          to_person_id,
-          group_id,
-          created_at
-        `,
-      )
-      .eq("from_person_id", target.id)
-      .eq("to_person_id", self.id),
-  ]);
-
-  if (selfToTargetResult.error) {
-    console.error("Unable to load outgoing IOUs:", selfToTargetResult.error);
-    throw new Error("Unable to load outgoing IOUs");
-  }
-
-  if (targetToSelfResult.error) {
-    console.error("Unable to load incoming IOUs:", targetToSelfResult.error);
-    throw new Error("Unable to load incoming IOUs");
-  }
-
-  const ious = [
-    ...(selfToTargetResult.data ?? []),
-    ...(targetToSelfResult.data ?? []),
-  ].sort(
-    (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
-
-  const iouIds = ious.map((iou) => iou.id);
-
-  let iouPayments: {
-    id: string;
-    iou_id: string;
-    from_person_id: string;
-    to_person_id: string;
-    amount: number;
-    paid_at: string;
-    note: string | null;
-    status: "pending" | "confirmed" | "rejected";
-  }[] = [];
-
-  if (iouIds.length > 0) {
-    const { data, error } = await supabase
-      .from("iou_payments")
-      .select(
-        `
-          id,
-          iou_id,
-          from_person_id,
-          to_person_id,
-          amount,
-          paid_at,
-          note,
-          status
-        `,
-      )
-      .in("iou_id", iouIds)
-      .order("paid_at", {
-        ascending: false,
-      });
-
-    if (error) {
-      console.error("Unable to load IOU payments:", error);
-      throw new Error("Unable to load IOU payments");
-    }
-
-    iouPayments = (data ?? []).map((payment) => ({
-      ...payment,
-      amount: Number(payment.amount),
-    }));
-  }
-
-  /*
-   * ------------------------------------------
-   * Share lookup
-   * ------------------------------------------
-   */
-
-  function getShare(expenseId: string, personId: string) {
-    const row = participantData.find(
-      (participant) =>
-        participant.expense_id === expenseId &&
-        participant.person_id === personId,
-    );
-
-    return Number(row?.share_amount ?? 0);
-  }
-
-  const confirmedExpensePayments = expensePayments.filter(
-    (payment) => payment.status === "confirmed",
-  );
-
-  const confirmedIouPayments = iouPayments.filter(
-    (payment) => payment.status === "confirmed",
-  );
-
-  /*
-   * ------------------------------------------
-   * Payment history between these two people
-   * ------------------------------------------
-   */
-
-  const directExpensePayments = confirmedExpensePayments.filter(
-    (payment) =>
-      (payment.from_person_id === self.id &&
-        payment.to_person_id === target.id) ||
-      (payment.from_person_id === target.id &&
-        payment.to_person_id === self.id),
-  );
-
-  const directIouPayments = confirmedIouPayments.filter(
-    (payment) =>
-      (payment.from_person_id === self.id &&
-        payment.to_person_id === target.id) ||
-      (payment.from_person_id === target.id &&
-        payment.to_person_id === self.id),
-  );
-
-  const paymentHistory = [
-    ...directExpensePayments.map((payment) => {
-      const expense = expenses.find((item) => item.id === payment.expense_id);
-
-      return {
-        id: `expense-${payment.id}`,
-        amount: payment.amount,
-        paidAt: payment.paid_at,
-        note: payment.note,
-        fromPersonId: payment.from_person_id,
-        toPersonId: payment.to_person_id,
-        context: expense?.name ?? "Expense payment",
-      };
-    }),
-
-    ...directIouPayments.map((payment) => {
-      const iou = ious.find((item) => item.id === payment.iou_id);
-
-      return {
-        id: `iou-${payment.id}`,
-        amount: payment.amount,
-        paidAt: payment.paid_at,
-        note: payment.note,
-        fromPersonId: payment.from_person_id,
-        toPersonId: payment.to_person_id,
-        context: iou?.reason ?? "IOU payment",
-      };
-    }),
-  ].sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime());
+  const expenseTotal = Number(expensesResult.data?.[0]?.total_count ?? 0);
+  const iouTotal = Number(iousResult.data?.[0]?.total_count ?? 0);
+  const paymentTotal = Number(paymentsResult.data?.[0]?.total_count ?? 0);
 
   /*
    * ------------------------------------------
@@ -492,7 +341,7 @@ export default async function PersonDetailPage({
 
           <div className="mt-5 grid grid-cols-3 gap-2">
             <div className="rounded-xl bg-white/[0.04] px-2 py-3 text-center">
-              <p className="text-lg font-bold">{expenses.length}</p>
+              <p className="text-lg font-bold">{expenseTotal}</p>
 
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 Expenses
@@ -500,13 +349,13 @@ export default async function PersonDetailPage({
             </div>
 
             <div className="rounded-xl bg-white/[0.04] px-2 py-3 text-center">
-              <p className="text-lg font-bold">{ious.length}</p>
+              <p className="text-lg font-bold">{iouTotal}</p>
 
               <p className="mt-0.5 text-[11px] text-muted-foreground">IOUs</p>
             </div>
 
             <div className="rounded-xl bg-white/[0.04] px-2 py-3 text-center">
-              <p className="text-lg font-bold">{paymentHistory.length}</p>
+              <p className="text-lg font-bold">{paymentTotal}</p>
 
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 Payments
@@ -523,16 +372,16 @@ export default async function PersonDetailPage({
             </h2>
 
             <span className="text-xs text-muted-foreground">
-              {expenses.length}
+              {expenseTotal}
             </span>
           </div>
 
           {expenses.length > 0 ? (
             <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-card">
               {expenses.map((expense, index) => {
-                const selfShare = getShare(expense.id, self.id);
+                const selfShare = expense.selfShare;
 
-                const targetShare = getShare(expense.id, target.id);
+                const targetShare = expense.targetShare;
 
                 let relationshipText = "Shared expense";
 
@@ -543,17 +392,11 @@ export default async function PersonDetailPage({
                 /*
                  * You paid.
                  */
-                if (expense.paid_by === self.id) {
-                  const paid = confirmedExpensePayments
-                    .filter(
-                      (payment) =>
-                        payment.expense_id === expense.id &&
-                        payment.from_person_id === target.id &&
-                        payment.to_person_id === self.id,
-                    )
-                    .reduce((total, payment) => total + payment.amount, 0);
-
-                  const remaining = Math.max(targetShare - paid, 0);
+                if (expense.paidBy === self.id) {
+                  const remaining = Math.max(
+                    targetShare - expense.targetPaidSelf,
+                    0,
+                  );
 
                   relationshipAmount = remaining;
 
@@ -566,20 +409,14 @@ export default async function PersonDetailPage({
 
                     relationshipClass = "text-muted-foreground";
                   }
-                } else if (expense.paid_by === target.id) {
+                } else if (expense.paidBy === target.id) {
                   /*
                    * They paid.
                    */
-                  const paid = confirmedExpensePayments
-                    .filter(
-                      (payment) =>
-                        payment.expense_id === expense.id &&
-                        payment.from_person_id === self.id &&
-                        payment.to_person_id === target.id,
-                    )
-                    .reduce((total, payment) => total + payment.amount, 0);
-
-                  const remaining = Math.max(selfShare - paid, 0);
+                  const remaining = Math.max(
+                    selfShare - expense.selfPaidTarget,
+                    0,
+                  );
 
                   relationshipAmount = remaining;
 
@@ -617,12 +454,12 @@ export default async function PersonDetailPage({
                             </p>
 
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                              {formatDateOnly(expense.expense_date)}
+                              {formatDateOnly(expense.expenseDate)}
                             </p>
                           </div>
 
                           <p className="shrink-0 font-semibold">
-                            {formatMoney(expense.total_amount)}
+                            {formatMoney(expense.totalAmount)}
                           </p>
                         </div>
 
@@ -656,6 +493,18 @@ export default async function PersonDetailPage({
               </p>
             </div>
           )}
+
+          <HistoryPagination
+            currentPage={expensePage}
+            totalCount={expenseTotal}
+            hrefForPage={(page) =>
+              buildPersonHref(id, {
+                expenses: page,
+                ious: iouPage,
+                payments: paymentPage,
+              })
+            }
+          />
         </section>
 
         {/* IOUs */}
@@ -665,21 +514,19 @@ export default async function PersonDetailPage({
               IOUs
             </h2>
 
-            <span className="text-xs text-muted-foreground">{ious.length}</span>
+            <span className="text-xs text-muted-foreground">{iouTotal}</span>
           </div>
 
           {ious.length > 0 ? (
             <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-card">
               {ious.map((iou, index) => {
-                const paidAmount = confirmedIouPayments
-                  .filter((payment) => payment.iou_id === iou.id)
-                  .reduce((total, payment) => total + payment.amount, 0);
+                const paidAmount = iou.paidAmount;
 
-                const original = Number(iou.amount);
+                const original = iou.originalAmount;
 
                 const remaining = Math.max(original - paidAmount, 0);
 
-                const targetOwes = iou.from_person_id === target.id;
+                const targetOwes = iou.fromPersonId === target.id;
 
                 const settled = remaining <= 0;
 
@@ -706,7 +553,7 @@ export default async function PersonDetailPage({
                             </p>
 
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                              {formatDateOnly(iou.iou_date)}
+                              {formatDateOnly(iou.iouDate)}
                             </p>
                           </div>
 
@@ -753,6 +600,18 @@ export default async function PersonDetailPage({
               </p>
             </div>
           )}
+
+          <HistoryPagination
+            currentPage={iouPage}
+            totalCount={iouTotal}
+            hrefForPage={(page) =>
+              buildPersonHref(id, {
+                expenses: expensePage,
+                ious: page,
+                payments: paymentPage,
+              })
+            }
+          />
         </section>
 
         {/* Payment history */}
@@ -763,7 +622,7 @@ export default async function PersonDetailPage({
             </h2>
 
             <span className="text-xs text-muted-foreground">
-              {paymentHistory.length}
+              {paymentTotal}
             </span>
           </div>
 
@@ -837,6 +696,18 @@ export default async function PersonDetailPage({
               </p>
             </div>
           )}
+
+          <HistoryPagination
+            currentPage={paymentPage}
+            totalCount={paymentTotal}
+            hrefForPage={(page) =>
+              buildPersonHref(id, {
+                expenses: expensePage,
+                ious: iouPage,
+                payments: page,
+              })
+            }
+          />
         </section>
       </div>
     </main>

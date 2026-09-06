@@ -31,17 +31,27 @@ export default async function Home() {
    * ------------------------------------------
    */
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select(
-      `
-      display_name,
-      avatar_color,
-      avatar_path
-    `,
-    )
-    .eq("id", user.id)
-    .maybeSingle();
+  const [profileResult, balancesResult, activityResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        `
+        display_name,
+        avatar_color,
+        avatar_path
+      `,
+      )
+      .eq("id", user.id)
+      .maybeSingle(),
+
+    supabase.rpc("get_people_balances"),
+
+    supabase.rpc("get_recent_activity", {
+      p_limit: 5,
+    }),
+  ]);
+
+  const { data: profile, error: profileError } = profileResult;
 
   if (profileError) {
     console.error("Failed to load profile:", profileError);
@@ -71,9 +81,7 @@ export default async function Home() {
    * ------------------------------------------
    */
 
-  const { data: peopleBalances, error: balanceError } = await supabase.rpc(
-    "get_people_balances",
-  );
+  const { data: peopleBalances, error: balanceError } = balancesResult;
 
   if (balanceError) {
     console.error("Failed to load dashboard balances:", balanceError);
@@ -149,74 +157,21 @@ export default async function Home() {
     }))
     .sort((a, b) => b.amount - a.amount);
 
-  /*
-   * ------------------------------------------
-   * Recent expenses
-   * ------------------------------------------
-   */
+  const { data: activityRows, error: activityError } = activityResult;
 
-  const { data: expenses, error: expenseError } = await supabase
-    .from("expenses")
-    .select("id, name, expense_date, total_amount, created_at")
-    .order("created_at", {
-      ascending: false,
-    })
-    .limit(10);
-
-  if (expenseError) {
-    console.error("Failed to load recent expenses:", expenseError);
-    throw new Error("Unable to load recent expenses");
+  if (activityError) {
+    console.error("Failed to load recent activity:", activityError);
+    throw new Error("Unable to load recent activity");
   }
 
-  /*
-   * ------------------------------------------
-   * Recent IOUs
-   * ------------------------------------------
-   */
-
-  const { data: ious, error: iouError } = await supabase
-    .from("ious")
-    .select("id, reason, iou_date, amount, created_at")
-    .order("created_at", {
-      ascending: false,
-    })
-    .limit(10);
-
-  if (iouError) {
-    console.error("Failed to load recent IOUs:", iouError);
-    throw new Error("Unable to load recent IOUs");
-  }
-
-  /*
-   * ------------------------------------------
-   * Combine activity
-   * ------------------------------------------
-   */
-
-  const expenseActivities: Activity[] = (expenses ?? []).map((expense) => ({
-    id: expense.id,
-    type: "expense",
-    title: expense.name,
-    date: formatDateOnly(expense.expense_date),
-    amount: Number(expense.total_amount),
-    createdAt: expense.created_at,
+  const recentActivities: Activity[] = (activityRows ?? []).map((activity) => ({
+    id: activity.activity_id,
+    type: activity.activity_type === "iou" ? "iou" : "expense",
+    title: activity.title,
+    date: formatDateOnly(activity.activity_date),
+    amount: Number(activity.amount),
+    createdAt: activity.created_at,
   }));
-
-  const iouActivities: Activity[] = (ious ?? []).map((iou) => ({
-    id: iou.id,
-    type: "iou",
-    title: iou.reason,
-    date: formatDateOnly(iou.iou_date),
-    amount: Number(iou.amount),
-    createdAt: iou.created_at,
-  }));
-
-  const recentActivities = [...expenseActivities, ...iouActivities]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )
-    .slice(0, 5);
 
   return (
     <AppShell>

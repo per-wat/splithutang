@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       expense_item_addons: {
@@ -841,7 +866,9 @@ export type Database = {
       claim_group_invite: { Args: { p_token: string }; Returns: string }
       claim_notification_push_outbox: {
         Args: { p_limit?: number }
-        Returns: { notification_id: string }[]
+        Returns: {
+          notification_id: string
+        }[]
       }
       create_expense: {
         Args: {
@@ -954,6 +981,63 @@ export type Database = {
           balance: number
           name: string
           person_id: string
+        }[]
+      }
+      get_person_ious: {
+        Args: { p_limit?: number; p_offset?: number; p_person_id: string }
+        Returns: {
+          created_at: string
+          from_person_id: string
+          group_id: string
+          iou_date: string
+          iou_id: string
+          original_amount: number
+          paid_amount: number
+          reason: string
+          to_person_id: string
+          total_count: number
+        }[]
+      }
+      get_person_payment_history: {
+        Args: { p_limit?: number; p_offset?: number; p_person_id: string }
+        Returns: {
+          amount: number
+          context: string
+          from_person_id: string
+          note: string
+          paid_at: string
+          payment_id: string
+          payment_type: string
+          to_person_id: string
+          total_count: number
+        }[]
+      }
+      get_person_shared_expenses: {
+        Args: { p_limit?: number; p_offset?: number; p_person_id: string }
+        Returns: {
+          created_at: string
+          expense_date: string
+          expense_id: string
+          group_id: string
+          name: string
+          paid_by: string
+          self_paid_target: number
+          self_share: number
+          target_paid_self: number
+          target_share: number
+          total_amount: number
+          total_count: number
+        }[]
+      }
+      get_recent_activity: {
+        Args: { p_limit?: number }
+        Returns: {
+          activity_date: string
+          activity_id: string
+          activity_type: string
+          amount: number
+          created_at: string
+          title: string
         }[]
       }
       has_my_identity: { Args: never; Returns: boolean }
@@ -1138,16 +1222,15 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       group_invite_status: ["pending", "accepted", "revoked", "expired"],
       group_member_role: ["owner", "member"],
       group_membership_status: ["active", "left", "removed"],
-      notification_push_mode: [
-        "in_app_only",
-        "all_important",
-        "payments_only",
-      ],
+      notification_push_mode: ["in_app_only", "all_important", "payments_only"],
       payment_status: ["pending", "confirmed", "rejected"],
       split_method: ["equal", "amount", "items"],
     },
