@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types tests/*.test.ts"
+    "test": "node --test --experimental-strip-types tests/*.test.ts",
+    "seed:performance": "node --env-file=.env.performance.local --experimental-strip-types scripts/seed-performance.ts",
+   "cleanup:performance": "node --env-file=.env.performance.local --experimental-strip-types scripts/cleanup-performance.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
