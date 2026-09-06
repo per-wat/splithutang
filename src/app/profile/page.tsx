@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { ProfileSettingsForm } from "@/components/profile/profile-settings-form";
+import { NotificationSettings } from "@/components/profile/notification-settings";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ProfilePage() {
@@ -74,6 +75,8 @@ export default async function ProfilePage() {
           initialAvatarPath={profile.avatar_path}
           initialAvatarUrl={avatarUrl}
         />
+
+        <NotificationSettings userId={user.id} />
       </div>
     </AppShell>
   );

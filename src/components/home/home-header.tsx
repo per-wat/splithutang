@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 type HomeHeaderProps = {
   displayName: string;
@@ -30,18 +31,22 @@ export function HomeHeader({
           </p>
         </div>
 
-        <Link
-          href="/profile"
-          aria-label="Profile and settings"
-          className="shrink-0 rounded-full transition-transform active:scale-95"
-        >
-          <ProfileAvatar
-            name={displayName}
-            avatarColor={avatarColor}
-            avatarUrl={avatarUrl}
-            className="size-12 text-base ring-2 ring-white/[0.08]"
-          />
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <NotificationBell />
+
+          <Link
+            href="/profile"
+            aria-label="Profile and settings"
+            className="shrink-0 rounded-full transition-transform active:scale-95"
+          >
+            <ProfileAvatar
+              name={displayName}
+              avatarColor={avatarColor}
+              avatarUrl={avatarUrl}
+              className="size-12 text-base ring-2 ring-white/[0.08]"
+            />
+          </Link>
+        </div>
       </div>
     </header>
   );

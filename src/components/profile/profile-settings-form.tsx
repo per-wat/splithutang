@@ -383,6 +383,27 @@ export function ProfileSettingsForm({
 
     setError("");
 
+    // A browser push subscription outlives the auth session. Unsubscribe it
+    // before signing out so a shared device cannot receive later account
+    // activity. Server cleanup is best-effort; an orphan is removed on 404/410.
+    if ("serviceWorker" in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.getRegistration("/");
+        const subscription = await registration?.pushManager.getSubscription();
+
+        if (subscription) {
+          await fetch("/api/push/subscriptions", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: subscription.endpoint }),
+          });
+          await subscription.unsubscribe();
+        }
+      } catch (pushCleanupError) {
+        console.error("Unable to clean up push while signing out:", pushCleanupError);
+      }
+    }
+
     const { error } = await supabase.auth.signOut();
 
     if (error) {
