@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export type Activity = {
   id: string;
   type: "expense" | "iou";
@@ -25,9 +27,10 @@ export function RecentActivity({ activities }: RecentActivityProps) {
       {activities.length > 0 ? (
         <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-card">
           {activities.map((activity, index) => (
-            <div
+            <Link
               key={`${activity.type}-${activity.id}`}
-              className={`flex items-center justify-between px-4 py-4 ${
+              href={`/${activity.type === "expense" ? "expenses" : "ious"}/${activity.id}`}
+              className={`flex items-center justify-between px-4 py-4 transition-colors hover:bg-white/[0.03] active:bg-white/[0.05] ${
                 index !== activities.length - 1
                   ? "border-b border-white/[0.06]"
                   : ""
@@ -44,7 +47,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
               <p className="ml-4 shrink-0 font-semibold">
                 {formatCurrency(activity.amount)}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       ) : (

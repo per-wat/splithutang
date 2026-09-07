@@ -8,12 +8,15 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types tests/*.test.ts"
+    "test": "node --test --experimental-strip-types tests/*.test.ts",
+    "seed:performance": "node --env-file=.env.performance.local --experimental-strip-types scripts/seed-performance.ts",
+    "cleanup:performance": "node --env-file=.env.performance.local --experimental-strip-types scripts/cleanup-performance.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
+    "@vercel/speed-insights": "^2.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.34.0",
