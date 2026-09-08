@@ -32,6 +32,10 @@ export type ReceiptReviewDraft = {
   receiptTime: ReceiptReviewField;
   expectedAmount: ReceiptReviewField;
   expectedAmountSource: "subtotal" | "total" | null;
+  serviceCharge: ReceiptReviewField;
+  tax: ReceiptReviewField;
+  rounding: ReceiptReviewField;
+  total: ReceiptReviewField;
   items: ReceiptReviewDraftItem[];
 };
 
@@ -40,6 +44,11 @@ export type ReceiptReviewIssue = {
     | "merchant-required"
     | "date-required"
     | "expected-amount-required"
+    | "service-charge-invalid"
+    | "tax-invalid"
+    | "rounding-invalid"
+    | "total-required"
+    | "receipt-total-mismatch"
     | "item-required"
     | "item-name-required"
     | "item-quantity-invalid"
@@ -99,6 +108,27 @@ function buildExpectedAmountField(matchResult: ReceiptItemMatchResult) {
   } satisfies ReceiptReviewField;
 }
 
+function buildOptionalMoneyField(field: ParsedReceiptField<number> | null) {
+  return {
+    value: formatMoney(field?.value ?? 0),
+    needsReview: field?.needsReview ?? false,
+    acknowledged: !field?.needsReview,
+  } satisfies ReceiptReviewField;
+}
+
+function buildTotalField(
+  summary: ParsedReceiptSummary,
+  fallbackTotal: number,
+) {
+  const needsReview = summary.total === null || summary.total.needsReview;
+
+  return {
+    value: formatMoney(summary.total?.value ?? fallbackTotal),
+    needsReview,
+    acknowledged: !needsReview,
+  } satisfies ReceiptReviewField;
+}
+
 export function buildReceiptReviewDraft(
   summary: ParsedReceiptSummary,
   matchResult: ReceiptItemMatchResult,
@@ -110,12 +140,41 @@ export function buildReceiptReviewDraft(
     ]),
   );
 
+  const serviceCharge = summary.serviceCharge?.value ?? 0;
+  const tax = summary.tax?.value ?? 0;
+  const detectedRounding = summary.rounding?.value ?? 0;
+  const finalTotal =
+    summary.total?.value ??
+    matchResult.calculatedItemTotal + serviceCharge + tax + detectedRounding;
+  const balancingRounding = Math.round(
+    (finalTotal - matchResult.calculatedItemTotal - serviceCharge - tax) * 100,
+  ) / 100;
+  const roundingDiffersFromDetected =
+    Math.abs(balancingRounding - detectedRounding) >= 0.01;
+  const useBalancingRounding =
+    summary.total !== null &&
+    Math.abs(balancingRounding - detectedRounding) <= 0.02;
+  const rounding = useBalancingRounding
+    ? balancingRounding
+    : detectedRounding;
+  const roundingNeedsReview =
+    summary.rounding?.needsReview === true ||
+    (summary.rounding === null && roundingDiffersFromDetected);
+
   return {
     merchant: buildTextField(summary.merchant),
     receiptDate: buildDateField(summary),
     receiptTime: buildTimeField(summary),
     expectedAmount: buildExpectedAmountField(matchResult),
     expectedAmountSource: matchResult.expectedAmountSource,
+    serviceCharge: buildOptionalMoneyField(summary.serviceCharge),
+    tax: buildOptionalMoneyField(summary.tax),
+    rounding: {
+      value: formatMoney(rounding),
+      needsReview: roundingNeedsReview,
+      acknowledged: !roundingNeedsReview,
+    },
+    total: buildTotalField(summary, finalTotal),
     items: matchResult.items.map((item) => ({
       id:
         itemIdBySequence.get(item.sequence) ?? `receipt-item-${item.sequence}`,
@@ -142,7 +201,7 @@ export function parseReceiptReviewMoney(value: string) {
     .replace(/^RM\s*/i, "")
     .replace(",", ".");
 
-  if (!/^\d{1,7}(?:\.\d{1,2})?$/.test(normalizedValue)) {
+  if (!/^-?\d{1,7}(?:\.\d{1,2})?$/.test(normalizedValue)) {
     return null;
   }
 
@@ -153,6 +212,12 @@ export function parseReceiptReviewMoney(value: string) {
   }
 
   return Math.round(amount * 100) / 100;
+}
+
+function parseNonnegativeMoney(value: string) {
+  const amount = parseReceiptReviewMoney(value);
+
+  return amount !== null && amount >= 0 ? amount : null;
 }
 
 export function calculateReceiptReviewItemTotal(draft: ReceiptReviewDraft) {
@@ -179,6 +244,27 @@ export function getReceiptReviewDifference(draft: ReceiptReviewDraft) {
   );
 }
 
+export function calculateReceiptReviewTotal(draft: ReceiptReviewDraft) {
+  const serviceCharge = parseNonnegativeMoney(draft.serviceCharge.value) ?? 0;
+  const tax = parseNonnegativeMoney(draft.tax.value) ?? 0;
+  const rounding = parseReceiptReviewMoney(draft.rounding.value) ?? 0;
+
+  return Math.round(
+    (calculateReceiptReviewItemTotal(draft) + serviceCharge + tax + rounding) *
+      100,
+  ) / 100;
+}
+
+export function getReceiptReviewFinalDifference(draft: ReceiptReviewDraft) {
+  const finalTotal = parseNonnegativeMoney(draft.total.value);
+
+  if (finalTotal === null) {
+    return null;
+  }
+
+  return Math.round((calculateReceiptReviewTotal(draft) - finalTotal) * 100) / 100;
+}
+
 export function validateReceiptReviewDraft(draft: ReceiptReviewDraft) {
   const issues: ReceiptReviewIssue[] = [];
 
@@ -200,6 +286,36 @@ export function validateReceiptReviewDraft(draft: ReceiptReviewDraft) {
     issues.push({
       code: "expected-amount-required",
       message: "Enter the receipt subtotal or item-total target.",
+    });
+  }
+
+  if (parseNonnegativeMoney(draft.serviceCharge.value) === null) {
+    issues.push({
+      code: "service-charge-invalid",
+      message: "Enter a valid service charge.",
+    });
+  }
+
+  if (parseNonnegativeMoney(draft.tax.value) === null) {
+    issues.push({
+      code: "tax-invalid",
+      message: "Enter a valid tax amount.",
+    });
+  }
+
+  if (parseReceiptReviewMoney(draft.rounding.value) === null) {
+    issues.push({
+      code: "rounding-invalid",
+      message: "Enter a valid rounding adjustment.",
+    });
+  }
+
+  const finalTotal = parseNonnegativeMoney(draft.total.value);
+
+  if (finalTotal === null || finalTotal <= 0) {
+    issues.push({
+      code: "total-required",
+      message: "Enter a valid final receipt total.",
     });
   }
 
@@ -237,7 +353,7 @@ export function validateReceiptReviewDraft(draft: ReceiptReviewDraft) {
       });
     }
 
-    const amount = parseReceiptReviewMoney(item.amount);
+    const amount = parseNonnegativeMoney(item.amount);
     const blankIncludedAddon =
       item.kind === "addon" && item.amount.trim() === "";
 
@@ -270,6 +386,17 @@ export function validateReceiptReviewDraft(draft: ReceiptReviewDraft) {
     });
   }
 
+  const finalDifference = getReceiptReviewFinalDifference(draft);
+
+  if (finalDifference !== null && Math.abs(finalDifference) >= 0.01) {
+    issues.push({
+      code: "receipt-total-mismatch",
+      message: `Subtotal and adjustments differ from the final total by RM${Math.abs(
+        finalDifference,
+      ).toFixed(2)}.`,
+    });
+  }
+
   return issues;
 }
 
@@ -281,6 +408,10 @@ export function countUnacknowledgedReceiptReviewFields(
     draft.receiptDate,
     draft.receiptTime,
     draft.expectedAmount,
+    draft.serviceCharge,
+    draft.tax,
+    draft.rounding,
+    draft.total,
   ];
 
   const summaryCount = summaryFields.filter(

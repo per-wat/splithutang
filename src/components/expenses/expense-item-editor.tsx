@@ -9,12 +9,14 @@ export type SubItem = {
   id: string;
   name: string;
   amount: string;
+  quantity: string;
 };
 
 export type ExpenseItem = {
   id: string;
   name: string;
   amount: string;
+  quantity: string;
   people: string[];
   subItems: SubItem[];
 };
@@ -22,7 +24,11 @@ export type ExpenseItem = {
 type ExpenseItemEditorProps = {
   item: ExpenseItem;
   people: Person[];
-  onUpdate: (itemId: string, field: "name" | "amount", value: string) => void;
+  onUpdate: (
+    itemId: string,
+    field: "name" | "amount" | "quantity",
+    value: string,
+  ) => void;
   onRemove: (itemId: string) => void;
   onTogglePerson: (itemId: string, personId: string) => void;
   onAddSubItem: (itemId: string) => void;
@@ -30,7 +36,7 @@ type ExpenseItemEditorProps = {
   onUpdateSubItem: (
     itemId: string,
     subItemId: string,
-    field: "name" | "amount",
+    field: "name" | "amount" | "quantity",
     value: string,
   ) => void;
 };
@@ -70,21 +76,40 @@ export function ExpenseItemEditor({
             className="w-full bg-transparent text-[15px] font-bold outline-none placeholder:text-muted-foreground"
           />
 
-          <div className="mt-2 flex w-fit items-center gap-1 border-b border-border">
-            <span className="text-xs text-muted-foreground">RM</span>
+          <div className="mt-2 flex items-end gap-4">
+            <label className="text-[11px] font-medium text-muted-foreground">
+              Quantity
+              <input
+                value={item.quantity}
+                onChange={(event) =>
+                  onUpdate(item.id, "quantity", event.target.value)
+                }
+                inputMode="numeric"
+                className="mt-1 block w-14 border-b border-border bg-transparent py-1 text-sm font-medium text-foreground outline-none"
+                type="number"
+                min="1"
+                step="1"
+              />
+            </label>
 
-            <input
-              value={item.amount}
-              onChange={(event) =>
-                onUpdate(item.id, "amount", event.target.value)
-              }
-              placeholder="0.00"
-              inputMode="decimal"
-              className="w-20 bg-transparent py-1 text-sm font-medium outline-none placeholder:text-muted-foreground"
-              type="number"
-              min="0"
-              step="0.01"
-            />
+            <label className="text-[11px] font-medium text-muted-foreground">
+              Line total
+              <div className="mt-1 flex items-center gap-1 border-b border-border">
+                <span className="text-xs text-muted-foreground">RM</span>
+                <input
+                  value={item.amount}
+                  onChange={(event) =>
+                    onUpdate(item.id, "amount", event.target.value)
+                  }
+                  placeholder="0.00"
+                  inputMode="decimal"
+                  className="w-20 bg-transparent py-1 text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </label>
           </div>
         </div>
 
@@ -160,6 +185,24 @@ export function ExpenseItemEditor({
                   }
                   placeholder="Add-on name"
                   className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                />
+
+                <input
+                  value={subItem.quantity}
+                  onChange={(event) =>
+                    onUpdateSubItem(
+                      item.id,
+                      subItem.id,
+                      "quantity",
+                      event.target.value,
+                    )
+                  }
+                  aria-label="Add-on quantity"
+                  inputMode="numeric"
+                  type="number"
+                  min="1"
+                  step="1"
+                  className="w-10 shrink-0 border-b border-border bg-transparent py-1 text-center text-xs outline-none"
                 />
 
                 <div className="flex shrink-0 items-center border-b border-border">

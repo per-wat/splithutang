@@ -12,8 +12,10 @@ import {
 import {
   buildReceiptReviewDraft,
   calculateReceiptReviewItemTotal,
+  calculateReceiptReviewTotal,
   countUnacknowledgedReceiptReviewFields,
   getReceiptReviewDifference,
+  getReceiptReviewFinalDifference,
   validateReceiptReviewDraft,
   type ReceiptReviewDraft,
   type ReceiptReviewDraftItem,
@@ -33,7 +35,11 @@ type SummaryFieldName =
   | "merchant"
   | "receiptDate"
   | "receiptTime"
-  | "expectedAmount";
+  | "expectedAmount"
+  | "serviceCharge"
+  | "tax"
+  | "rounding"
+  | "total";
 
 const INPUT_CLASS_NAME =
   "mt-1.5 h-11 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20";
@@ -79,6 +85,14 @@ export function ReceiptReviewEditor({
     [draft],
   );
   const difference = useMemo(() => getReceiptReviewDifference(draft), [draft]);
+  const receiptTotal = useMemo(
+    () => calculateReceiptReviewTotal(draft),
+    [draft],
+  );
+  const finalDifference = useMemo(
+    () => getReceiptReviewFinalDifference(draft),
+    [draft],
+  );
   const unacknowledgedCount = useMemo(
     () => countUnacknowledgedReceiptReviewFields(draft),
     [draft],
@@ -196,6 +210,10 @@ export function ReceiptReviewEditor({
       receiptDate: { ...current.receiptDate, acknowledged: true },
       receiptTime: { ...current.receiptTime, acknowledged: true },
       expectedAmount: { ...current.expectedAmount, acknowledged: true },
+      serviceCharge: { ...current.serviceCharge, acknowledged: true },
+      tax: { ...current.tax, acknowledged: true },
+      rounding: { ...current.rounding, acknowledged: true },
+      total: { ...current.total, acknowledged: true },
       items: current.items.map((item) => ({
         ...item,
         acknowledged: true,
@@ -541,15 +559,146 @@ export function ReceiptReviewEditor({
         })}
       </div>
 
+      <div className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
+        <div>
+          <h4 className="text-sm font-medium text-zinc-200">
+            Receipt adjustments
+          </h4>
+          <p className="mt-1 text-xs leading-5 text-zinc-600">
+            These are stored separately and distributed proportionally from
+            each person&apos;s assigned items.
+          </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <label className="text-xs font-medium text-zinc-500">
+            <span className="flex items-center justify-between gap-2">
+              Service charge
+              {draft.serviceCharge.needsReview &&
+                !draft.serviceCharge.acknowledged && (
+                  <button
+                    type="button"
+                    onClick={() => acknowledgeSummaryField("serviceCharge")}
+                    aria-label="Mark service charge as checked"
+                  >
+                    <ReviewBadge />
+                  </button>
+                )}
+            </span>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 mt-0.5 -translate-y-1/2 text-sm text-zinc-500">
+                RM
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={draft.serviceCharge.value}
+                onChange={(event) =>
+                  updateSummaryField("serviceCharge", event.target.value)
+                }
+                className={`${INPUT_CLASS_NAME} pl-10`}
+              />
+            </div>
+          </label>
+
+          <label className="text-xs font-medium text-zinc-500">
+            <span className="flex items-center justify-between gap-2">
+              Tax
+              {draft.tax.needsReview && !draft.tax.acknowledged && (
+                <button
+                  type="button"
+                  onClick={() => acknowledgeSummaryField("tax")}
+                  aria-label="Mark tax as checked"
+                >
+                  <ReviewBadge />
+                </button>
+              )}
+            </span>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 mt-0.5 -translate-y-1/2 text-sm text-zinc-500">
+                RM
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={draft.tax.value}
+                onChange={(event) =>
+                  updateSummaryField("tax", event.target.value)
+                }
+                className={`${INPUT_CLASS_NAME} pl-10`}
+              />
+            </div>
+          </label>
+
+          <label className="text-xs font-medium text-zinc-500">
+            <span className="flex items-center justify-between gap-2">
+              Rounding
+              {draft.rounding.needsReview && !draft.rounding.acknowledged && (
+                <button
+                  type="button"
+                  onClick={() => acknowledgeSummaryField("rounding")}
+                  aria-label="Mark rounding as checked"
+                >
+                  <ReviewBadge />
+                </button>
+              )}
+            </span>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 mt-0.5 -translate-y-1/2 text-sm text-zinc-500">
+                RM
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={draft.rounding.value}
+                onChange={(event) =>
+                  updateSummaryField("rounding", event.target.value)
+                }
+                className={`${INPUT_CLASS_NAME} pl-10`}
+              />
+            </div>
+          </label>
+
+          <label className="text-xs font-medium text-zinc-500">
+            <span className="flex items-center justify-between gap-2">
+              Final total
+              {draft.total.needsReview && !draft.total.acknowledged && (
+                <button
+                  type="button"
+                  onClick={() => acknowledgeSummaryField("total")}
+                  aria-label="Mark final total as checked"
+                >
+                  <ReviewBadge />
+                </button>
+              )}
+            </span>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 mt-0.5 -translate-y-1/2 text-sm text-zinc-500">
+                RM
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={draft.total.value}
+                onChange={(event) =>
+                  updateSummaryField("total", event.target.value)
+                }
+                className={`${INPUT_CLASS_NAME} pl-10`}
+              />
+            </div>
+          </label>
+        </div>
+      </div>
+
       <div className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-zinc-500">Calculated item total</span>
+          <span className="text-zinc-500">Item subtotal</span>
           <span className="font-semibold text-zinc-100">
             RM{itemTotal.toFixed(2)}
           </span>
         </div>
         <div className="mt-2 flex items-center justify-between text-sm">
-          <span className="text-zinc-500">Difference</span>
+          <span className="text-zinc-500">OCR target difference</span>
           <span
             className={
               difference !== null && Math.abs(difference) <= 0.02
@@ -563,6 +712,32 @@ export function ReceiptReviewEditor({
                   difference,
                 ).toFixed(2)}`}
           </span>
+        </div>
+        <div className="mt-3 border-t border-zinc-800 pt-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-zinc-300">
+              Calculated final total
+            </span>
+            <span className="font-semibold text-violet-300">
+              RM{receiptTotal.toFixed(2)}
+            </span>
+          </div>
+          <div className="mt-2 flex items-center justify-between text-sm">
+            <span className="text-zinc-500">Final total difference</span>
+            <span
+              className={
+                finalDifference === 0
+                  ? "font-medium text-emerald-400"
+                  : "font-medium text-amber-300"
+              }
+            >
+              {finalDifference === null
+                ? "Needs total"
+                : `${finalDifference < 0 ? "-" : finalDifference > 0 ? "+" : ""}RM${Math.abs(
+                    finalDifference,
+                  ).toFixed(2)}`}
+            </span>
+          </div>
         </div>
       </div>
 
