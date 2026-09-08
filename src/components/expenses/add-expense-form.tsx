@@ -2,7 +2,8 @@
 import { createClient } from "@/lib/supabase/client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, ScanLine } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
 import {
@@ -13,6 +14,19 @@ import {
 
 import { ExpensePeopleSelector, type Person } from "./expense-people-selector";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import {
+  calculateReceiptReviewItemTotal,
+  parseReceiptReviewMoney,
+  type ReceiptReviewDraft,
+} from "@/lib/receipts/build-receipt-review-draft";
+
+const ReceiptImportDialog = dynamic(
+  () =>
+    import("@/components/receipts/receipt-import-dialog").then(
+      (module) => module.ReceiptImportDialog,
+    ),
+  { ssr: false },
+);
 
 export type ExpenseGroupOption = {
   id: string;
@@ -26,12 +40,21 @@ type AddExpenseFormProps = {
 
 type SplitMethod = "equal" | "amount" | "items";
 
+type ReceiptBreakdown = {
+  serviceCharge: number;
+  tax: number;
+  rounding: number;
+};
+
 const createId = () => crypto.randomUUID();
+
+const roundMoney = (value: number) => Math.round(value * 100) / 100;
 
 const createEmptyItem = (selectedPeople: string[]): ExpenseItem => ({
   id: createId(),
   name: "",
   amount: "",
+  quantity: "1",
   people: [...selectedPeople],
   subItems: [],
 });
@@ -82,6 +105,11 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
     createEmptyItem(initialPersonIds),
   ]);
 
+  const [receiptBreakdown, setReceiptBreakdown] =
+    useState<ReceiptBreakdown | null>(null);
+
+  const [showReceiptScanner, setShowReceiptScanner] = useState(false);
+
   const [saving, setSaving] = useState(false);
 
   const [error, setError] = useState("");
@@ -93,7 +121,7 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
    */
 
   const itemsTotal = useMemo(() => {
-    return items.reduce((total, item) => {
+    return roundMoney(items.reduce((total, item) => {
       const mainAmount = Number(item.amount) || 0;
 
       const addOnsTotal = item.subItems.reduce(
@@ -102,7 +130,7 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
       );
 
       return total + mainAmount + addOnsTotal;
-    }, 0);
+    }, 0));
   }, [items]);
 
   const amountSplitTotal = useMemo(() => {
@@ -114,15 +142,26 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
 
   const totalAmount = useMemo(() => {
     if (splitMethod === "items") {
-      return itemsTotal;
+      return roundMoney(
+        itemsTotal +
+          (receiptBreakdown?.serviceCharge ?? 0) +
+          (receiptBreakdown?.tax ?? 0) +
+          (receiptBreakdown?.rounding ?? 0),
+      );
     }
 
     if (splitMethod === "amount") {
       return amountSplitTotal;
     }
 
-    return Number(totalExpense) || 0;
-  }, [splitMethod, totalExpense, itemsTotal, amountSplitTotal]);
+    return roundMoney(Number(totalExpense) || 0);
+  }, [
+    splitMethod,
+    totalExpense,
+    itemsTotal,
+    amountSplitTotal,
+    receiptBreakdown,
+  ]);
 
   const equalShares = useMemo(() => {
     if (selectedPeople.length === 0) {
@@ -209,7 +248,7 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
 
   const updateItem = (
     itemId: string,
-    field: "name" | "amount",
+    field: "name" | "amount" | "quantity",
     value: string,
   ) => {
     setItems((current) =>
@@ -261,6 +300,7 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
                   id: createId(),
                   name: "",
                   amount: "",
+                  quantity: "1",
                 },
               ],
             }
@@ -287,7 +327,7 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
   const updateSubItem = (
     itemId: string,
     subItemId: string,
-    field: keyof Pick<SubItem, "name" | "amount">,
+    field: keyof Pick<SubItem, "name" | "amount" | "quantity">,
     value: string,
   ) => {
     setItems((current) =>
@@ -309,6 +349,54 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
     );
   };
 
+  function importReceiptDraft(draft: ReceiptReviewDraft) {
+    const importedItems: ExpenseItem[] = draft.items
+      .filter((item) => item.kind === "item")
+      .map((item) => ({
+        id: createId(),
+        name: item.name.trim(),
+        amount: item.amount,
+        quantity: item.quantity,
+        people: [...selectedPeople],
+        subItems: draft.items
+          .filter(
+            (candidate) =>
+              candidate.kind === "addon" && candidate.parentId === item.id,
+          )
+          .map((addon) => ({
+            id: createId(),
+            name: addon.name.trim(),
+            amount: addon.amount || "0.00",
+            quantity: addon.quantity,
+          })),
+      }));
+
+    const serviceCharge =
+      parseReceiptReviewMoney(draft.serviceCharge.value) ?? 0;
+    const tax = parseReceiptReviewMoney(draft.tax.value) ?? 0;
+    const rounding = parseReceiptReviewMoney(draft.rounding.value) ?? 0;
+    const finalTotal = parseReceiptReviewMoney(draft.total.value) ?? 0;
+
+    setExpenseName(draft.merchant.value.trim());
+    setDate(draft.receiptDate.value);
+    setItems(importedItems);
+    setSplitMethod("items");
+    setTotalExpense(finalTotal.toFixed(2));
+    setReceiptBreakdown({ serviceCharge, tax, rounding });
+    setShowReceiptScanner(false);
+
+    const importedSubtotal = calculateReceiptReviewItemTotal(draft);
+    const importedTotal = roundMoney(
+      importedSubtotal + serviceCharge + tax + rounding,
+    );
+
+    if (importedTotal !== finalTotal) {
+      setError("The imported receipt totals no longer reconcile.");
+    } else {
+      setError("");
+    }
+  }
+
   /*
    * ------------------------------------------
    * Validation
@@ -326,11 +414,16 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
     items.every(
       (item) =>
         item.name.trim().length > 0 &&
+        /^\d+$/.test(item.quantity) &&
+        Number(item.quantity) >= 1 &&
         Number(item.amount || 0) >= 0 &&
         item.people.length > 0 &&
         item.subItems.every(
           (subItem) =>
-            subItem.name.trim().length > 0 && Number(subItem.amount || 0) >= 0,
+            subItem.name.trim().length > 0 &&
+            /^\d+$/.test(subItem.quantity) &&
+            Number(subItem.quantity) >= 1 &&
+            Number(subItem.amount || 0) >= 0,
         ),
     );
 
@@ -368,12 +461,16 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
 
             amount: Number(item.amount) || 0,
 
+            quantity: Number(item.quantity),
+
             people: item.people,
 
             sub_items: item.subItems.map((subItem) => ({
               name: subItem.name.trim(),
 
               amount: Number(subItem.amount) || 0,
+
+              quantity: Number(subItem.quantity),
             })),
           }))
         : [];
@@ -394,6 +491,16 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
       p_participants: participants,
 
       p_items: expenseItems,
+
+      p_receipt_summary:
+        splitMethod === "items" && receiptBreakdown
+          ? {
+              subtotal: itemsTotal,
+              service_charge: receiptBreakdown.serviceCharge,
+              tax: receiptBreakdown.tax,
+              rounding: receiptBreakdown.rounding,
+            }
+          : null,
     });
 
     if (error) {
@@ -435,6 +542,7 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
     );
 
     setItems([createEmptyItem(groupPersonIds)]);
+    setReceiptBreakdown(null);
   }
 
   return (
@@ -454,6 +562,26 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
           <h1 className="text-xl font-bold">Add Expense</h1>
         </div>
       </header>
+
+      <section className="mt-3 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold">Have a receipt?</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Scan it on this device, review the result, then populate this
+              form.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowReceiptScanner(true)}
+            className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white transition-colors hover:bg-blue-500"
+          >
+            <ScanLine className="size-4" />
+            Scan
+          </button>
+        </div>
+      </section>
 
       {/* Basic information */}
       <section className="mt-3">
@@ -717,6 +845,59 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
       {/* By Items */}
       {splitMethod === "items" && (
         <section className="mt-4 space-y-3">
+          {receiptBreakdown && (
+            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold">Receipt adjustments</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Distributed proportionally from assigned item shares
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReceiptBreakdown(null)}
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  Remove
+                </button>
+              </div>
+
+              <div className="mt-3 space-y-2 border-t border-blue-500/10 pt-3 text-sm">
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Item subtotal</span>
+                  <span>RM {itemsTotal.toFixed(2)}</span>
+                </div>
+                {receiptBreakdown.serviceCharge !== 0 && (
+                  <div className="flex justify-between gap-3">
+                    <span className="text-muted-foreground">
+                      Service charge
+                    </span>
+                    <span>
+                      RM {receiptBreakdown.serviceCharge.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {receiptBreakdown.tax !== 0 && (
+                  <div className="flex justify-between gap-3">
+                    <span className="text-muted-foreground">Tax</span>
+                    <span>RM {receiptBreakdown.tax.toFixed(2)}</span>
+                  </div>
+                )}
+                {receiptBreakdown.rounding !== 0 && (
+                  <div className="flex justify-between gap-3">
+                    <span className="text-muted-foreground">Rounding</span>
+                    <span>
+                      {receiptBreakdown.rounding < 0 ? "-" : ""}RM {Math.abs(
+                        receiptBreakdown.rounding,
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {items.map((item) => (
             <ExpenseItemEditor
               key={item.id}
@@ -769,6 +950,13 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
           {saving ? "Saving..." : "Save Expense"}
         </button>
       </div>
+
+      {showReceiptScanner && (
+        <ReceiptImportDialog
+          onClose={() => setShowReceiptScanner(false)}
+          onImport={importReceiptDraft}
+        />
+      )}
     </div>
   );
 }

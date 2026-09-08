@@ -1,5 +1,3 @@
-import { NotificationBell } from "@/components/notifications/notification-bell";
-
 export function ExpensesHeader() {
   return (
     <header className="px-5 pt-8">
@@ -13,8 +11,6 @@ export function ExpensesHeader() {
             Keep track of shared spending
           </p>
         </div>
-
-        <NotificationBell />
       </div>
     </header>
   );

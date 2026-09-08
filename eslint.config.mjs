@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Versioned third-party OCR runtime files copied from npm packages.
+    "public/tesseract/**",
   ]),
 ]);
 

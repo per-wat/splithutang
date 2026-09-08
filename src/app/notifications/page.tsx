@@ -2,22 +2,20 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/layout/app-shell";
 import { NotificationCentre } from "@/components/notifications/notification-centre";
+import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function NotificationsPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   if (!user) {
     redirect("/login");
   }
 
   return (
-    <AppShell>
+    <>
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/[0.05] bg-background/95 px-5 pb-3 pt-6 backdrop-blur-md">
         <Link
           href="/"
@@ -34,6 +32,6 @@ export default async function NotificationsPage() {
       </header>
 
       <NotificationCentre />
-    </AppShell>
+    </>
   );
 }

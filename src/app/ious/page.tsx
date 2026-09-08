@@ -6,7 +6,7 @@ import { IousList, type IouOverview } from "@/components/ious/ious-list";
 
 import type { IouStatus } from "@/components/ious/iou-card";
 
-import { AppShell } from "@/components/layout/app-shell";
+import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/date-format";
 
@@ -26,9 +26,7 @@ function getIouStatus(status: string): IouStatus {
 export default async function IousPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   if (!user) {
     redirect("/login");
@@ -40,7 +38,7 @@ export default async function IousPage() {
     console.error("Failed to load IOUs:", error);
 
     return (
-      <AppShell>
+      <>
         <IousHeader />
 
         <div className="px-5 pt-8">
@@ -52,7 +50,7 @@ export default async function IousPage() {
             </p>
           </div>
         </div>
-      </AppShell>
+      </>
     );
   }
 
@@ -72,10 +70,10 @@ export default async function IousPage() {
   }));
 
   return (
-    <AppShell>
+    <>
       <IousHeader />
 
       <IousList ious={ious} />
-    </AppShell>
+    </>
   );
 }

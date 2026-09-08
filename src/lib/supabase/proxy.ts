@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
   // IMPORTANT:
   // Do not remove this getUser() call.
   // It validates the current authenticated user with Supabase.
-  await supabase.auth.getUser();
+  await supabase.auth.getClaims();
 
   return supabaseResponse;
 }

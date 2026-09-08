@@ -1,8 +1,17 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FileText, Home, Plus, Receipt, Users, X } from "lucide-react";
+import {
+  FileText,
+  Home,
+  LoaderCircle,
+  Plus,
+  Receipt,
+  Users,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
@@ -27,6 +36,36 @@ const navItems = [
     icon: Users,
   },
 ];
+
+function NavItemContent({
+  Icon,
+  label,
+  isActive,
+}: {
+  Icon: LucideIcon;
+  label: string;
+  isActive: boolean;
+}) {
+  const { pending } = useLinkStatus();
+
+  return (
+    <>
+      {pending ? (
+        <LoaderCircle
+          className="size-5 animate-spin"
+          aria-hidden="true"
+        />
+      ) : (
+        <Icon
+          className="size-5"
+          strokeWidth={isActive ? 2.5 : 2}
+          aria-hidden="true"
+        />
+      )}
+      <span>{pending ? "Loading" : label}</span>
+    </>
+  );
+}
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -111,11 +150,11 @@ export function BottomNav() {
                     : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
-                <Icon
-                  className="size-5"
-                  strokeWidth={isActive ? 2.5 : 2}
+                <NavItemContent
+                  Icon={Icon}
+                  label={item.label}
+                  isActive={isActive}
                 />
-                <span>{item.label}</span>
               </Link>
             );
           })}
@@ -159,11 +198,11 @@ export function BottomNav() {
                     : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
-                <Icon
-                  className="size-5"
-                  strokeWidth={isActive ? 2.5 : 2}
+                <NavItemContent
+                  Icon={Icon}
+                  label={item.label}
+                  isActive={isActive}
                 />
-                <span>{item.label}</span>
               </Link>
             );
           })}

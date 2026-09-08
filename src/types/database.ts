@@ -46,6 +46,7 @@ export type Database = {
           expense_item_id: string
           id: string
           name: string
+          quantity: number
           sort_order: number
           updated_at: string
         }
@@ -55,6 +56,7 @@ export type Database = {
           expense_item_id: string
           id?: string
           name: string
+          quantity?: number
           sort_order?: number
           updated_at?: string
         }
@@ -64,6 +66,7 @@ export type Database = {
           expense_item_id?: string
           id?: string
           name?: string
+          quantity?: number
           sort_order?: number
           updated_at?: string
         }
@@ -117,6 +120,7 @@ export type Database = {
           expense_id: string
           id: string
           name: string
+          quantity: number
           sort_order: number
           updated_at: string
         }
@@ -126,6 +130,7 @@ export type Database = {
           expense_id: string
           id?: string
           name: string
+          quantity?: number
           sort_order?: number
           updated_at?: string
         }
@@ -135,6 +140,7 @@ export type Database = {
           expense_id?: string
           id?: string
           name?: string
+          quantity?: number
           sort_order?: number
           updated_at?: string
         }
@@ -263,6 +269,10 @@ export type Database = {
           name: string
           owner_id: string
           paid_by: string
+          receipt_rounding: number | null
+          receipt_service_charge: number | null
+          receipt_subtotal: number | null
+          receipt_tax: number | null
           split_method: Database["public"]["Enums"]["split_method"]
           total_amount: number
           updated_at: string
@@ -275,6 +285,10 @@ export type Database = {
           name: string
           owner_id: string
           paid_by: string
+          receipt_rounding?: number | null
+          receipt_service_charge?: number | null
+          receipt_subtotal?: number | null
+          receipt_tax?: number | null
           split_method: Database["public"]["Enums"]["split_method"]
           total_amount: number
           updated_at?: string
@@ -287,6 +301,10 @@ export type Database = {
           name?: string
           owner_id?: string
           paid_by?: string
+          receipt_rounding?: number | null
+          receipt_service_charge?: number | null
+          receipt_subtotal?: number | null
+          receipt_tax?: number | null
           split_method?: Database["public"]["Enums"]["split_method"]
           total_amount?: number
           updated_at?: string
@@ -878,6 +896,7 @@ export type Database = {
           p_name: string
           p_paid_by: string
           p_participants: Json
+          p_receipt_summary?: Json
           p_split_method: Database["public"]["Enums"]["split_method"]
           p_total_amount: number
         }
@@ -948,6 +967,14 @@ export type Database = {
           token: string
         }[]
       }
+      get_group_member_candidates: {
+        Args: never
+        Returns: {
+          avatar_color: string
+          name: string
+          person_id: string
+        }[]
+      }
       get_groups_overview: {
         Args: never
         Returns: {
@@ -978,6 +1005,7 @@ export type Database = {
         Args: never
         Returns: {
           avatar_color: string
+          avatar_path: string
           balance: number
           name: string
           person_id: string

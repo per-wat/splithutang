@@ -32,6 +32,35 @@ npx supabase test db supabase/tests/notifications_rls.sql
 
 `db reset` is destructive to the local Supabase database only. Use it only when local data can be discarded; never run it against the linked production project.
 
+## Receipt scanning
+
+Receipt OCR runs in the browser. The source image and raw OCR output remain in
+temporary component state and are discarded when the scanner closes; only the
+reviewed merchant, date, item hierarchy, quantities, amounts, and receipt
+adjustments are saved.
+
+The Tesseract 7.0.0 worker, compatible LSTM cores, and English model are served
+from `public/tesseract/7.0.0`. This avoids runtime requests to third-party OCR
+CDNs. These versioned assets receive a one-year immutable cache header and are
+excluded from the authentication proxy. The automated tests verify that every
+required runtime file is present.
+
+`/receipt-test` is available only under `npm run dev`. Production users scan
+receipts from the Add Expense page.
+
+The migration at
+`supabase/migrations/20260908050000_receipt_expense_model.sql` persists reviewed
+receipt adjustments and item quantities. Apply pending migrations deliberately:
+
+```bash
+npx supabase db push --dry-run
+npx supabase db push
+```
+
+When upgrading Tesseract, use a new versioned public directory and update
+`RECEIPT_OCR_ASSET_PATHS` together with the cache-header path. Do not silently
+replace files inside the existing immutable directory.
+
 ## Notification setup
 
 The migration at `supabase/migrations/20260906090000_notifications.sql` creates the notification history, preferences, multi-device Push API subscriptions, delivery outbox, RLS policies, Realtime publication entry, and database-authoritative domain triggers. Apply it locally with `npx supabase migration up`. Apply pending migrations to a deliberately linked remote project only when you intend to do so:

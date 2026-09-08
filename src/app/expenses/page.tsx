@@ -9,7 +9,7 @@ import {
 
 import type { ExpenseStatus } from "@/components/expenses/expense-card";
 
-import { AppShell } from "@/components/layout/app-shell";
+import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/date-format";
 
@@ -29,9 +29,7 @@ function getExpenseStatus(status: string): ExpenseStatus {
 export default async function ExpensesPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   if (!user) {
     redirect("/login");
@@ -43,7 +41,7 @@ export default async function ExpensesPage() {
     console.error("Failed to load expenses:", error);
 
     return (
-      <AppShell>
+      <>
         <ExpensesHeader />
 
         <div className="px-5 pt-8">
@@ -55,7 +53,7 @@ export default async function ExpensesPage() {
             </p>
           </div>
         </div>
-      </AppShell>
+      </>
     );
   }
 
@@ -70,10 +68,10 @@ export default async function ExpensesPage() {
   }));
 
   return (
-    <AppShell>
+    <>
       <ExpensesHeader />
 
       <ExpensesList expenses={expenses} />
-    </AppShell>
+    </>
   );
 }

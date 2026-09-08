@@ -15,13 +15,16 @@ type NotificationContextValue = {
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = useMemo(
+    () => (typeof window === "undefined" ? null : createClient()),
+    [],
+  );
   const [userId, setUserId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [liveNotifications, setLiveNotifications] = useState<NotificationRow[]>([]);
 
   const refreshUnreadCount = useCallback(async () => {
-    if (!userId) {
+    if (!supabase || !userId) {
       setUnreadCount(0);
       return;
     }
@@ -37,11 +40,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [supabase, userId]);
 
   useEffect(() => {
+    if (!supabase) {
+      return;
+    }
+
     let active = true;
 
-    void supabase.auth.getUser().then(({ data }) => {
+    void supabase.auth.getClaims().then(({ data }) => {
       if (active) {
-        setUserId(data.user?.id ?? null);
+        setUserId(data?.claims.sub ?? null);
       }
     });
 
@@ -60,7 +67,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [supabase]);
 
   useEffect(() => {
-    if (!userId) {
+    if (!supabase || !userId) {
       return;
     }
 

@@ -59,7 +59,11 @@ export default async function ExpenseDetailPage({
         expense_date,
         paid_by,
         split_method,
-        total_amount
+        total_amount,
+        receipt_subtotal,
+        receipt_service_charge,
+        receipt_tax,
+        receipt_rounding
       `,
     )
     .eq("id", id)
@@ -116,7 +120,7 @@ export default async function ExpenseDetailPage({
       expense.split_method === "items"
         ? supabase
             .from("expense_items")
-            .select("id, name, amount, sort_order")
+            .select("id, name, amount, quantity, sort_order")
             .eq("expense_id", expense.id)
             .order("sort_order")
         : Promise.resolve({
@@ -168,6 +172,7 @@ export default async function ExpenseDetailPage({
                 expense_item_id,
                 name,
                 amount,
+                quantity,
                 sort_order
               `,
             )
@@ -405,6 +410,52 @@ export default async function ExpenseDetailPage({
           </div>
         </section>
 
+        {expense.receipt_subtotal !== null && (
+          <section className="mt-4 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold">Receipt breakdown</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Charges were distributed proportionally from item shares
+                </p>
+              </div>
+              <Receipt className="size-5 text-blue-400" />
+            </div>
+
+            <div className="mt-3 space-y-2 border-t border-blue-500/10 pt-3 text-sm">
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">Item subtotal</span>
+                <span>{formatMoney(Number(expense.receipt_subtotal))}</span>
+              </div>
+              {Number(expense.receipt_service_charge ?? 0) !== 0 && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">
+                    Service charge
+                  </span>
+                  <span>
+                    {formatMoney(Number(expense.receipt_service_charge))}
+                  </span>
+                </div>
+              )}
+              {Number(expense.receipt_tax ?? 0) !== 0 && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Tax</span>
+                  <span>{formatMoney(Number(expense.receipt_tax))}</span>
+                </div>
+              )}
+              {Number(expense.receipt_rounding ?? 0) !== 0 && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Rounding</span>
+                  <span>
+                    {Number(expense.receipt_rounding) < 0 ? "-" : ""}
+                    {formatMoney(Math.abs(Number(expense.receipt_rounding)))}
+                  </span>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Participants */}
         <section className="mt-7">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -480,7 +531,14 @@ export default async function ExpenseDetailPage({
                     className="rounded-2xl border border-white/[0.08] bg-card p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <p className="font-semibold">{item.name}</p>
+                      <p className="font-semibold">
+                        {item.quantity > 1 && (
+                          <span className="mr-1 text-blue-400">
+                            {item.quantity}×
+                          </span>
+                        )}
+                        {item.name}
+                      </p>
 
                       <p className="shrink-0 font-bold">
                         {formatMoney(itemTotal)}
@@ -488,7 +546,7 @@ export default async function ExpenseDetailPage({
                     </div>
 
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Base: {formatMoney(Number(item.amount))}
+                      Line total: {formatMoney(Number(item.amount))}
                     </p>
 
                     {sharingPeople.length > 0 && (
@@ -512,6 +570,7 @@ export default async function ExpenseDetailPage({
                             className="flex justify-between gap-3 text-sm"
                           >
                             <span className="text-muted-foreground">
+                              {addon.quantity > 1 && `${addon.quantity}× `}
                               {addon.name}
                             </span>
 
