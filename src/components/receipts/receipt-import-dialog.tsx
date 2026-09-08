@@ -5,6 +5,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Camera,
+  Images,
   LoaderCircle,
   RotateCcw,
   ScanLine,
@@ -38,7 +39,8 @@ export function ReceiptImportDialog({
   onClose,
   onImport,
 }: ReceiptImportDialogProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
   const scanAbortControllerRef = useRef<AbortController | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -183,8 +185,12 @@ export function ReceiptImportDialog({
       previewUrlRef.current = null;
     }
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
+
+    if (libraryInputRef.current) {
+      libraryInputRef.current.value = "";
     }
 
     setReceiptFile(null);
@@ -296,29 +302,50 @@ export function ReceiptImportDialog({
         </div>
 
         <input
-          ref={fileInputRef}
-          id="expense-receipt-image"
+          ref={cameraInputRef}
+          id="expense-receipt-camera"
           type="file"
           accept="image/*"
           capture="environment"
           onChange={handleReceiptSelected}
           className="sr-only"
         />
+        <input
+          ref={libraryInputRef}
+          id="expense-receipt-library"
+          type="file"
+          accept="image/*"
+          onChange={handleReceiptSelected}
+          className="sr-only"
+        />
 
         {!previewUrl ? (
-          <label
-            htmlFor="expense-receipt-image"
-            className="mt-4 flex min-h-72 cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card px-6 text-center"
-          >
+          <div className="mt-4 flex min-h-72 flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-card px-6 text-center">
             <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-blue-500/15 text-blue-400">
               <Camera className="size-8" />
             </div>
-            <p className="font-semibold">Take or choose a receipt photo</p>
+            <p className="font-semibold">Add a receipt photo</p>
             <p className="mt-2 max-w-xs text-sm leading-6 text-muted-foreground">
               Keep the receipt flat, fill the frame and avoid shadows over the
               prices.
             </p>
-          </label>
+            <div className="mt-5 grid w-full max-w-xs grid-cols-2 gap-3">
+              <label
+                htmlFor="expense-receipt-camera"
+                className="flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-blue-600 px-3 text-sm font-semibold text-white"
+              >
+                <Camera className="size-4" />
+                Take photo
+              </label>
+              <label
+                htmlFor="expense-receipt-library"
+                className="flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-border bg-background px-3 text-sm font-semibold text-muted-foreground"
+              >
+                <Images className="size-4" />
+                Choose image
+              </label>
+            </div>
+          </div>
         ) : (
           <>
             <div className="mt-4 overflow-hidden rounded-3xl border border-border bg-card">
