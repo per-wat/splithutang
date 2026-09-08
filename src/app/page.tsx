@@ -10,15 +10,14 @@ import {
   RecentActivity,
   type Activity,
 } from "@/components/home/recent-activity";
+import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/date-format";
 
 export default async function Home() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   if (!user) {
     redirect("/login");
@@ -58,7 +57,7 @@ export default async function Home() {
 
   const displayName =
     profile?.display_name ??
-    user.user_metadata?.display_name ??
+    user.displayName ??
     user.email?.split("@")[0] ??
     "You";
 

@@ -3,14 +3,13 @@ import { Archive, ChevronRight, Plus, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function GroupsPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   if (!user) {
     redirect("/login");

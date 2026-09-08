@@ -4,14 +4,13 @@ import { redirect } from "next/navigation";
 
 import { ProfileSettingsForm } from "@/components/profile/profile-settings-form";
 import { NotificationSettings } from "@/components/profile/notification-settings";
+import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   if (!user) {
     redirect("/login");

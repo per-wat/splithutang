@@ -6,6 +6,7 @@ import { IousList, type IouOverview } from "@/components/ious/ious-list";
 
 import type { IouStatus } from "@/components/ious/iou-card";
 
+import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/date-format";
 
@@ -25,9 +26,7 @@ function getIouStatus(status: string): IouStatus {
 export default async function IousPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   if (!user) {
     redirect("/login");

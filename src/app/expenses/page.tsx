@@ -9,6 +9,7 @@ import {
 
 import type { ExpenseStatus } from "@/components/expenses/expense-card";
 
+import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/date-format";
 
@@ -28,9 +29,7 @@ function getExpenseStatus(status: string): ExpenseStatus {
 export default async function ExpensesPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   if (!user) {
     redirect("/login");

@@ -46,9 +46,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     let active = true;
 
-    void supabase.auth.getUser().then(({ data }) => {
+    void supabase.auth.getClaims().then(({ data }) => {
       if (active) {
-        setUserId(data.user?.id ?? null);
+        setUserId(data?.claims.sub ?? null);
       }
     });
 

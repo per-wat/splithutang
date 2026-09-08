@@ -3,13 +3,12 @@ import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { NotificationCentre } from "@/components/notifications/notification-centre";
+import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function NotificationsPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getVerifiedUser(supabase);
 
   if (!user) {
     redirect("/login");
