@@ -967,6 +967,14 @@ export type Database = {
           token: string
         }[]
       }
+      get_group_member_candidates: {
+        Args: never
+        Returns: {
+          avatar_color: string
+          name: string
+          person_id: string
+        }[]
+      }
       get_groups_overview: {
         Args: never
         Returns: {
