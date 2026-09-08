@@ -9,6 +9,7 @@ import {
   RotateCcw,
   ScanLine,
   ShieldCheck,
+  X,
 } from "lucide-react";
 
 import { ReceiptReviewEditor } from "@/components/receipts/receipt-review-editor";
@@ -39,10 +40,13 @@ export function ReceiptImportDialog({
 }: ReceiptImportDialogProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
+  const scanAbortControllerRef = useRef<AbortController | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [ocrResult, setOcrResult] = useState<ReceiptOcrResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [showDiscardConfirmation, setShowDiscardConfirmation] =
+    useState(false);
   const [status, setStatus] = useState("Waiting for a receipt");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -53,12 +57,82 @@ export function ReceiptImportDialog({
   );
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     return () => {
+      scanAbortControllerRef.current?.abort();
+      document.body.style.overflow = previousOverflow;
+
       if (previewUrlRef.current) {
         URL.revokeObjectURL(previewUrlRef.current);
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!receiptFile) {
+      return;
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = true;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [receiptFile]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      if (showDiscardConfirmation) {
+        setShowDiscardConfirmation(false);
+        return;
+      }
+
+      if (isScanning) {
+        return;
+      }
+
+      if (receiptFile) {
+        setShowDiscardConfirmation(true);
+      } else {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isScanning, onClose, receiptFile, showDiscardConfirmation]);
+
+  function requestClose() {
+    if (isScanning) {
+      return;
+    }
+
+    if (receiptFile) {
+      setShowDiscardConfirmation(true);
+      return;
+    }
+
+    onClose();
+  }
+
+  function cancelScan() {
+    if (!isScanning) {
+      return;
+    }
+
+    setStatus("Cancelling scan");
+    scanAbortControllerRef.current?.abort();
+  }
 
   function replacePreview(file: File) {
     if (previewUrlRef.current) {
@@ -94,6 +168,7 @@ export function ReceiptImportDialog({
     setReceiptFile(file);
     replacePreview(file);
     setOcrResult(null);
+    setShowDiscardConfirmation(false);
     setProgress(0);
     setStatus("Ready to scan");
   }
@@ -115,6 +190,7 @@ export function ReceiptImportDialog({
     setReceiptFile(null);
     setPreviewUrl(null);
     setOcrResult(null);
+    setShowDiscardConfirmation(false);
     setProgress(0);
     setStatus("Waiting for a receipt");
     setError("");
@@ -129,6 +205,9 @@ export function ReceiptImportDialog({
     setError("");
     setOcrResult(null);
     setProgress(0);
+
+    const abortController = new AbortController();
+    scanAbortControllerRef.current = abortController;
 
     try {
       setStatus("Enhancing receipt image");
@@ -149,21 +228,28 @@ export function ReceiptImportDialog({
           setStatus(`${phaseName}: ${formatStatus(workerStatus)}`);
           setProgress(overallProgress);
         },
+        { signal: abortController.signal },
       );
 
       setOcrResult(result);
       setProgress(100);
       setStatus("Scan completed");
     } catch (scanError) {
+      if (abortController.signal.aborted) {
+        setProgress(0);
+        setStatus("Scan cancelled");
+        return;
+      }
+
       console.error("Receipt OCR failed:", scanError);
-      setError(
-        scanError instanceof Error
-          ? scanError.message
-          : "The receipt could not be scanned.",
-      );
+      setError("The receipt could not be scanned. Please try again.");
       setProgress(0);
       setStatus("Scan failed");
     } finally {
+      if (scanAbortControllerRef.current === abortController) {
+        scanAbortControllerRef.current = null;
+      }
+
       setIsScanning(false);
     }
   }
@@ -179,7 +265,7 @@ export function ReceiptImportDialog({
         <header className="sticky top-0 z-10 -mx-4 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-4 backdrop-blur">
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={isScanning}
             className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground disabled:opacity-50"
             aria-label="Close receipt scanner"
@@ -265,12 +351,15 @@ export function ReceiptImportDialog({
                 </button>
                 <button
                   type="button"
-                  onClick={resetReceipt}
-                  disabled={isScanning}
+                  onClick={isScanning ? cancelScan : resetReceipt}
                   className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 text-sm font-semibold text-muted-foreground disabled:opacity-50"
                 >
-                  <RotateCcw className="size-4" />
-                  Choose another
+                  {isScanning ? (
+                    <X className="size-4" />
+                  ) : (
+                    <RotateCcw className="size-4" />
+                  )}
+                  {isScanning ? "Cancel scan" : "Choose another"}
                 </button>
               </div>
             )}
@@ -278,7 +367,10 @@ export function ReceiptImportDialog({
         )}
 
         {(isScanning || progress > 0) && !analysis && (
-          <div className="mt-4 rounded-2xl border border-border bg-card p-4">
+          <div
+            aria-live="polite"
+            className="mt-4 rounded-2xl border border-border bg-card p-4"
+          >
             <div className="mb-3 flex items-center justify-between gap-4">
               <p className="truncate text-sm text-muted-foreground">{status}</p>
               <p className="text-sm font-semibold text-blue-400">{progress}%</p>
@@ -293,7 +385,10 @@ export function ReceiptImportDialog({
         )}
 
         {error && (
-          <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300">
+          <div
+            role="alert"
+            className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-300"
+          >
             {error}
           </div>
         )}
@@ -304,6 +399,24 @@ export function ReceiptImportDialog({
               <span>Three-pass scan completed</span>
               <span>{ocrResult.durationSeconds.toFixed(1)} seconds</span>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={scanReceipt}
+                className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 text-sm font-semibold text-muted-foreground"
+              >
+                <ScanLine className="size-4" />
+                Scan again
+              </button>
+              <button
+                type="button"
+                onClick={resetReceipt}
+                className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 text-sm font-semibold text-muted-foreground"
+              >
+                <RotateCcw className="size-4" />
+                Choose another
+              </button>
+            </div>
             <ReceiptReviewEditor
               summary={analysis.summary}
               matchResult={analysis.matchedItems}
@@ -312,6 +425,41 @@ export function ReceiptImportDialog({
           </div>
         )}
       </div>
+
+      {showDiscardConfirmation && (
+        <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/70 p-4 sm:items-center">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="discard-receipt-title"
+            className="w-full max-w-sm rounded-3xl border border-border bg-card p-5 shadow-2xl"
+          >
+            <h3 id="discard-receipt-title" className="font-bold">
+              Discard this receipt?
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              The selected image and any review changes will be removed from
+              this device.
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDiscardConfirmation(false)}
+                className="h-11 rounded-2xl border border-border bg-background px-4 text-sm font-semibold"
+              >
+                Keep reviewing
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="h-11 rounded-2xl bg-red-600 px-4 text-sm font-semibold text-white"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,3 @@
+public/tesseract/**/*.traineddata.gz binary
+public/tesseract/**/core/*.wasm.js binary
+public/tesseract/**/worker.min.js binary

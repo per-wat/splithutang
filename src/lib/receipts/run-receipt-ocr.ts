@@ -38,6 +38,16 @@ export type ReceiptOcrResult = {
   durationSeconds: number;
 };
 
+export type RunReceiptOcrOptions = {
+  signal?: AbortSignal;
+};
+
+export const RECEIPT_OCR_ASSET_PATHS = {
+  workerPath: "/tesseract/7.0.0/worker.min.js",
+  corePath: "/tesseract/7.0.0/core",
+  langPath: "/tesseract/7.0.0/lang",
+} as const;
+
 type TesseractWord = {
   text: string;
   confidence: number;
@@ -118,16 +128,71 @@ function calculateOverallProgress(
   }
 }
 
+function createAbortError() {
+  return new DOMException("Receipt scan cancelled.", "AbortError");
+}
+
+function throwIfAborted(signal?: AbortSignal) {
+  if (signal?.aborted) {
+    throw createAbortError();
+  }
+}
+
+async function runAbortable<T>(operation: Promise<T>, signal?: AbortSignal) {
+  if (!signal) {
+    return operation;
+  }
+
+  throwIfAborted(signal);
+
+  let abortHandler: (() => void) | null = null;
+  const aborted = new Promise<never>((_, reject) => {
+    abortHandler = () => reject(createAbortError());
+    signal.addEventListener("abort", abortHandler, { once: true });
+  });
+
+  try {
+    return await Promise.race([operation, aborted]);
+  } finally {
+    if (abortHandler) {
+      signal.removeEventListener("abort", abortHandler);
+    }
+  }
+}
+
 export async function runReceiptOcr(
   image: Blob,
   onProgress?: (progress: ReceiptOcrProgress) => void,
+  options: RunReceiptOcrOptions = {},
 ): Promise<ReceiptOcrResult> {
   const startedAt = performance.now();
+  const { signal } = options;
   let activePhase: ReceiptOcrPhase = "loading";
   let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
 
+  async function terminateActiveWorker() {
+    const activeWorker = worker;
+    worker = null;
+
+    if (activeWorker) {
+      await activeWorker.terminate();
+    }
+  }
+
+  const handleAbort = () => {
+    void terminateActiveWorker().catch(() => {
+      // Cancellation is best-effort; the normal finally path also terminates.
+    });
+  };
+
+  signal?.addEventListener("abort", handleAbort, { once: true });
+
   try {
+    throwIfAborted(signal);
+
     worker = await createWorker("eng", OEM.LSTM_ONLY, {
+      ...RECEIPT_OCR_ASSET_PATHS,
+      workerBlobURL: false,
       logger: (message) => {
         onProgress?.({
           phase: activePhase,
@@ -140,43 +205,63 @@ export async function runReceiptOcr(
       },
     });
 
+    throwIfAborted(signal);
+
     activePhase = "layout";
 
-    await worker.setParameters({
-      tessedit_pageseg_mode: PSM.AUTO,
-      preserve_interword_spaces: "1",
-    });
+    await runAbortable(
+      worker.setParameters({
+        tessedit_pageseg_mode: PSM.AUTO,
+        preserve_interword_spaces: "1",
+      }),
+      signal,
+    );
 
-    const layoutResult = await worker.recognize(
-      image,
-      { rotateAuto: true },
-      { text: true, blocks: true },
+    const layoutResult = await runAbortable(
+      worker.recognize(
+        image,
+        { rotateAuto: true },
+        { text: true, blocks: true },
+      ),
+      signal,
     );
 
     activePhase = "structured";
 
-    await worker.setParameters({
-      tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
-      preserve_interword_spaces: "1",
-    });
+    await runAbortable(
+      worker.setParameters({
+        tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+        preserve_interword_spaces: "1",
+      }),
+      signal,
+    );
 
-    const structuredResult = await worker.recognize(
-      image,
-      { rotateAuto: true },
-      { text: true, blocks: true },
+    const structuredResult = await runAbortable(
+      worker.recognize(
+        image,
+        { rotateAuto: true },
+        { text: true, blocks: true },
+      ),
+      signal,
     );
 
     activePhase = "recovery";
 
-    await worker.setParameters({
-      tessedit_pageseg_mode: PSM.SPARSE_TEXT,
-      preserve_interword_spaces: "1",
-    });
+    await runAbortable(
+      worker.setParameters({
+        tessedit_pageseg_mode: PSM.SPARSE_TEXT,
+        preserve_interword_spaces: "1",
+      }),
+      signal,
+    );
 
-    const recoveryResult = await worker.recognize(
-      image,
-      { rotateAuto: true },
-      { text: true, blocks: true },
+    const recoveryResult = await runAbortable(
+      worker.recognize(
+        image,
+        { rotateAuto: true },
+        { text: true, blocks: true },
+      ),
+      signal,
     );
 
     return {
@@ -197,9 +282,14 @@ export async function runReceiptOcr(
       },
       durationSeconds: Math.round((performance.now() - startedAt) / 100) / 10,
     };
-  } finally {
-    if (worker) {
-      await worker.terminate();
+  } catch (error) {
+    if (signal?.aborted) {
+      throw createAbortError();
     }
+
+    throw error;
+  } finally {
+    signal?.removeEventListener("abort", handleAbort);
+    await terminateActiveWorker();
   }
 }
