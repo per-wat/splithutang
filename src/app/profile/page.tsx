@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/layout/app-shell";
 import { ProfileSettingsForm } from "@/components/profile/profile-settings-form";
 import { NotificationSettings } from "@/components/profile/notification-settings";
 import { createClient } from "@/lib/supabase/server";
@@ -47,7 +46,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <AppShell>
+    <>
       <header className="sticky top-0 z-20 flex items-center gap-3 bg-background px-5 pb-3 pt-6">
         <Link
           href="/"
@@ -78,6 +77,6 @@ export default async function ProfilePage() {
 
         <NotificationSettings userId={user.id} />
       </div>
-    </AppShell>
+    </>
   );
 }

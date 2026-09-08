@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/layout/app-shell";
 import { PeopleHeader } from "@/components/people/people-header";
 import {
   PeopleList,
@@ -26,7 +25,7 @@ export default async function PeoplePage() {
     console.error("Failed to load people balances:", error);
 
     return (
-      <AppShell>
+      <>
         <PeopleHeader />
 
         <div className="px-5 pt-8">
@@ -38,7 +37,7 @@ export default async function PeoplePage() {
             </p>
           </div>
         </div>
-      </AppShell>
+      </>
     );
   }
 
@@ -86,9 +85,9 @@ export default async function PeoplePage() {
   });
 
   return (
-    <AppShell>
+    <>
       <PeopleHeader />
       <PeopleList people={visiblePeople} />
-    </AppShell>
+    </>
   );
 }

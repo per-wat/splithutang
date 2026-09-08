@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Archive, ChevronRight, Plus, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/layout/app-shell";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,7 +31,7 @@ export default async function GroupsPage() {
   );
 
   return (
-    <AppShell>
+    <>
       <header className="px-5 pt-8">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -172,6 +171,6 @@ export default async function GroupsPage() {
           </div>
         )}
       </section>
-    </AppShell>
+    </>
   );
 }

@@ -10,7 +10,6 @@ import {
   RecentActivity,
   type Activity,
 } from "@/components/home/recent-activity";
-import { AppShell } from "@/components/layout/app-shell";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/date-format";
 
@@ -174,7 +173,7 @@ export default async function Home() {
   }));
 
   return (
-    <AppShell>
+    <>
       <HomeHeader
         displayName={displayName}
         avatarColor={avatarColor}
@@ -189,6 +188,6 @@ export default async function Home() {
       <OutstandingList people={outstandingPeople} />
 
       <RecentActivity activities={recentActivities} />
-    </AppShell>
+    </>
   );
 }

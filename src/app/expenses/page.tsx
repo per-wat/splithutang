@@ -9,7 +9,6 @@ import {
 
 import type { ExpenseStatus } from "@/components/expenses/expense-card";
 
-import { AppShell } from "@/components/layout/app-shell";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/date-format";
 
@@ -43,7 +42,7 @@ export default async function ExpensesPage() {
     console.error("Failed to load expenses:", error);
 
     return (
-      <AppShell>
+      <>
         <ExpensesHeader />
 
         <div className="px-5 pt-8">
@@ -55,7 +54,7 @@ export default async function ExpensesPage() {
             </p>
           </div>
         </div>
-      </AppShell>
+      </>
     );
   }
 
@@ -70,10 +69,10 @@ export default async function ExpensesPage() {
   }));
 
   return (
-    <AppShell>
+    <>
       <ExpensesHeader />
 
       <ExpensesList expenses={expenses} />
-    </AppShell>
+    </>
   );
 }
