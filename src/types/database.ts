@@ -997,6 +997,7 @@ export type Database = {
         Args: never
         Returns: {
           avatar_color: string
+          avatar_path: string
           balance: number
           name: string
           person_id: string

@@ -1,5 +1,3 @@
-import { NotificationBell } from "@/components/notifications/notification-bell";
-
 export function IousHeader() {
   return (
     <header className="px-5 pt-8">
@@ -13,8 +11,6 @@ export function IousHeader() {
             Keep track of money you owe or are owed
           </p>
         </div>
-
-        <NotificationBell />
       </div>
     </header>
   );

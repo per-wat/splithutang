@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { UsersRound } from "lucide-react";
-import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export function PeopleHeader() {
   return (
@@ -24,8 +23,6 @@ export function PeopleHeader() {
             <UsersRound className="size-4" />
             Groups
           </Link>
-
-          <NotificationBell />
         </div>
       </div>
     </header>
