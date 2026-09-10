@@ -28,6 +28,11 @@ function LoginForm() {
       ? "/signup"
       : `/signup?next=${encodeURIComponent(nextPath)}`;
 
+  const forgotPasswordHref =
+    nextPath === "/"
+      ? "/forgot-password"
+      : `/forgot-password?next=${encodeURIComponent(nextPath)}`;
+
   const [email, setEmail] = useState("");
 
   const [password, setPassword] = useState("");
@@ -35,6 +40,8 @@ function LoginForm() {
   const [error, setError] = useState("");
 
   const [loading, setLoading] = useState(false);
+
+  const passwordReset = searchParams.get("reset") === "success";
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -100,12 +107,21 @@ function LoginForm() {
         </div>
 
         <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="text-sm font-medium"
-          >
-            Password
-          </label>
+          <div className="flex items-center justify-between gap-4">
+            <label
+              htmlFor="password"
+              className="text-sm font-medium"
+            >
+              Password
+            </label>
+
+            <Link
+              href={forgotPasswordHref}
+              className="text-xs font-medium text-blue-400 transition-colors hover:text-blue-300"
+            >
+              Forgot password?
+            </Link>
+          </div>
 
           <input
             id="password"
@@ -117,6 +133,14 @@ function LoginForm() {
             className="w-full rounded-md border bg-background px-3 py-2"
           />
         </div>
+
+        {passwordReset && (
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+            <p className="text-sm text-emerald-400">
+              Password updated. Sign in with your new password.
+            </p>
+          </div>
+        )}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 

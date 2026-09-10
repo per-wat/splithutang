@@ -121,16 +121,18 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
    */
 
   const itemsTotal = useMemo(() => {
-    return roundMoney(items.reduce((total, item) => {
-      const mainAmount = Number(item.amount) || 0;
+    return roundMoney(
+      items.reduce((total, item) => {
+        const mainAmount = Number(item.amount) || 0;
 
-      const addOnsTotal = item.subItems.reduce(
-        (sum, subItem) => sum + (Number(subItem.amount) || 0),
-        0,
-      );
+        const addOnsTotal = item.subItems.reduce(
+          (sum, subItem) => sum + (Number(subItem.amount) || 0),
+          0,
+        );
 
-      return total + mainAmount + addOnsTotal;
-    }, 0));
+        return total + mainAmount + addOnsTotal;
+      }, 0),
+    );
   }, [items]);
 
   const amountSplitTotal = useMemo(() => {
@@ -563,399 +565,418 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
         </div>
       </header>
 
-      <section className="mt-3 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold">Have a receipt?</p>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              Scan it on this device, review the result, then populate this
-              form.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowReceiptScanner(true)}
-            className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white transition-colors hover:bg-blue-500"
-          >
-            <ScanLine className="size-4" />
-            Scan
-          </button>
+      {groups.length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-white/[0.08] bg-card px-4 py-10 text-center">
+          <p className="font-medium">No groups available</p>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create a group before adding an expense.
+          </p>
         </div>
-      </section>
-
-      {/* Basic information */}
-      <section className="mt-3">
-        <h2 className="mb-4 text-sm font-bold">Basic Information</h2>
-
-        <div>
-          <label
-            htmlFor="expense-group"
-            className="mb-2 block text-sm font-semibold"
-          >
-            Group
-          </label>
-
-          <select
-            id="expense-group"
-            value={selectedGroupId}
-            onChange={(event) => handleGroupChange(event.target.value)}
-            className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm outline-none transition-colors focus:border-blue-500"
-          >
-            {groups.map((group) => (
-              <option
-                key={group.id}
-                value={group.id}
-              >
-                {group.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label
-              htmlFor="expense-name"
-              className="mb-2 block text-sm font-semibold"
-            >
-              Expense Name
-            </label>
-
-            <input
-              id="expense-name"
-              value={expenseName}
-              onChange={(event) => setExpenseName(event.target.value)}
-              placeholder="e.g. Dinner at Mamak"
-              className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="expense-date"
-              className="mb-2 block text-sm font-semibold"
-            >
-              Date
-            </label>
-
-            <input
-              id="expense-date"
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-              className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm outline-none transition-colors focus:border-blue-500"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Paid by */}
-      <section className="mt-7">
-        <h2 className="mb-3 text-sm font-bold">Paid By</h2>
-
-        <div className="flex flex-wrap gap-2">
-          {people.map((person) => {
-            const active = paidBy === person.id;
-
-            return (
+      ) : (
+        <>
+          <section className="mt-3 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold">Have a receipt?</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Scan it on this device, review the result, then populate this
+                  form.
+                </p>
+              </div>
               <button
-                key={person.id}
                 type="button"
-                onClick={() => togglePaidBy(person.id)}
-                className={`flex items-center gap-2 rounded-full border px-2 py-1.5 pr-3 transition-colors ${
-                  active
-                    ? "border-blue-500 bg-blue-500/10"
-                    : "border-border bg-card hover:bg-white/[0.04]"
-                }`}
+                onClick={() => setShowReceiptScanner(true)}
+                className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white transition-colors hover:bg-blue-500"
               >
-                <ProfileAvatar
-                  name={person.name}
-                  avatarColor={person.color}
-                  avatarPath={person.avatarPath}
-                  className="size-8 text-sm"
-                />
-
-                <span className="text-sm font-medium">{person.name}</span>
+                <ScanLine className="size-4" />
+                Scan
               </button>
-            );
-          })}
-        </div>
-      </section>
+            </div>
+          </section>
 
-      {/* Who is involved */}
-      <section className="mt-7">
-        <h2 className="mb-3 text-sm font-bold">With Who?</h2>
+          {/* Basic information */}
+          <section className="mt-3">
+            <h2 className="mb-4 text-sm font-bold">Basic Information</h2>
 
-        <ExpensePeopleSelector
-          people={people}
-          selectedPeople={selectedPeople}
-          onToggle={togglePerson}
-          personPaying={paidBy}
-        />
-      </section>
-
-      {/* Split method */}
-      <section className="mt-7">
-        <h2 className="mb-3 text-sm font-bold">How to Split</h2>
-
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            {
-              id: "equal",
-              label: "Equal",
-            },
-            {
-              id: "amount",
-              label: "By Amount",
-            },
-            {
-              id: "items",
-              label: "By Items",
-            },
-          ].map((method) => {
-            const active = splitMethod === method.id;
-
-            return (
-              <button
-                key={method.id}
-                type="button"
-                onClick={() => setSplitMethod(method.id as SplitMethod)}
-                className={`h-11 rounded-full border text-xs font-semibold transition-colors ${
-                  active
-                    ? "border-blue-600 bg-blue-600 text-white"
-                    : "border-border bg-card text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-                }`}
+            <div>
+              <label
+                htmlFor="expense-group"
+                className="mb-2 block text-sm font-semibold"
               >
-                {method.label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
+                Group
+              </label>
 
-      {/* Equal */}
-      {splitMethod === "equal" && (
-        <section className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="p-4">
-            <label
-              htmlFor="total-expense"
-              className="text-sm font-semibold"
-            >
-              Total Amount (RM)
-            </label>
+              <select
+                id="expense-group"
+                value={selectedGroupId}
+                onChange={(event) => handleGroupChange(event.target.value)}
+                className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm outline-none transition-colors focus:border-blue-500"
+              >
+                {groups.map((group) => (
+                  <option
+                    key={group.id}
+                    value={group.id}
+                  >
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <input
-              id="total-expense"
-              type="number"
-              inputMode="decimal"
-              min="0"
-              step="0.01"
-              value={totalExpense}
-              onChange={(event) => setTotalExpense(event.target.value)}
-              placeholder="0.00"
-              className="mt-2 h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-500"
-            />
-          </div>
-
-          <div className="border-t border-border">
-            {people
-              .filter((person) => selectedPeople.includes(person.id))
-              .map((person, index, list) => (
-                <div
-                  key={person.id}
-                  className={`flex items-center justify-between px-4 py-3.5 ${
-                    index !== list.length - 1 ? "border-b border-border" : ""
-                  }`}
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="expense-name"
+                  className="mb-2 block text-sm font-semibold"
                 >
-                  <div className="flex items-center gap-3">
+                  Expense Name
+                </label>
+
+                <input
+                  id="expense-name"
+                  value={expenseName}
+                  onChange={(event) => setExpenseName(event.target.value)}
+                  placeholder="e.g. Dinner at Mamak"
+                  className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="expense-date"
+                  className="mb-2 block text-sm font-semibold"
+                >
+                  Date
+                </label>
+
+                <input
+                  id="expense-date"
+                  type="date"
+                  value={date}
+                  onChange={(event) => setDate(event.target.value)}
+                  className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-sm outline-none transition-colors focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Paid by */}
+          <section className="mt-7">
+            <h2 className="mb-3 text-sm font-bold">Paid By</h2>
+
+            <div className="flex flex-wrap gap-2">
+              {people.map((person) => {
+                const active = paidBy === person.id;
+
+                return (
+                  <button
+                    key={person.id}
+                    type="button"
+                    onClick={() => togglePaidBy(person.id)}
+                    className={`flex items-center gap-2 rounded-full border px-2 py-1.5 pr-3 transition-colors ${
+                      active
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-border bg-card hover:bg-white/[0.04]"
+                    }`}
+                  >
                     <ProfileAvatar
                       name={person.name}
                       avatarColor={person.color}
                       avatarPath={person.avatarPath}
-                      className="size-9 text-sm"
+                      className="size-8 text-sm"
                     />
 
-                    <span className="text-sm font-semibold">{person.name}</span>
-                  </div>
+                    <span className="text-sm font-medium">{person.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-                  <span className="font-bold">
-                    RM {(equalShares[person.id] ?? 0).toFixed(2)}
-                  </span>
-                </div>
-              ))}
-          </div>
+          {/* Who is involved */}
+          <section className="mt-7">
+            <h2 className="mb-3 text-sm font-bold">With Who?</h2>
 
-          <div className="flex justify-between border-t border-border bg-white/[0.03] px-4 py-3 text-sm">
-            <span className="text-muted-foreground">Total</span>
+            <ExpensePeopleSelector
+              people={people}
+              selectedPeople={selectedPeople}
+              onToggle={togglePerson}
+              personPaying={paidBy}
+            />
+          </section>
 
-            <span className="font-bold">RM {totalAmount.toFixed(2)}</span>
-          </div>
-        </section>
-      )}
+          {/* Split method */}
+          <section className="mt-7">
+            <h2 className="mb-3 text-sm font-bold">How to Split</h2>
 
-      {/* By Amount */}
-      {splitMethod === "amount" && (
-        <section className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
-          {people
-            .filter((person) => selectedPeople.includes(person.id))
-            .map((person, index, list) => (
-              <div
-                key={person.id}
-                className={`flex items-center justify-between px-4 py-3.5 ${
-                  index !== list.length - 1 ? "border-b border-border" : ""
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <ProfileAvatar
-                    name={person.name}
-                    avatarColor={person.color}
-                    avatarPath={person.avatarPath}
-                    className="size-9 text-sm"
-                  />
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                {
+                  id: "equal",
+                  label: "Equal",
+                },
+                {
+                  id: "amount",
+                  label: "By Amount",
+                },
+                {
+                  id: "items",
+                  label: "By Items",
+                },
+              ].map((method) => {
+                const active = splitMethod === method.id;
 
-                  <span className="text-sm font-semibold">{person.name}</span>
-                </div>
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setSplitMethod(method.id as SplitMethod)}
+                    className={`h-11 rounded-full border text-xs font-semibold transition-colors ${
+                      active
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-border bg-card text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                    }`}
+                  >
+                    {method.label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-                <div className="flex items-center gap-1 border-b border-border">
-                  <span className="text-sm text-muted-foreground">RM</span>
-
-                  <input
-                    value={amounts[person.id]}
-                    onChange={(event) =>
-                      updateAmount(person.id, event.target.value)
-                    }
-                    className="w-20 bg-transparent py-1 text-right text-sm font-semibold outline-none"
-                    inputMode="decimal"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-            ))}
-
-          <div className="flex justify-between border-t border-border bg-white/[0.03] px-4 py-3 text-sm">
-            <span className="text-muted-foreground">Total</span>
-
-            <span className="font-bold">RM {totalAmount.toFixed(2)}</span>
-          </div>
-        </section>
-      )}
-
-      {/* By Items */}
-      {splitMethod === "items" && (
-        <section className="mt-4 space-y-3">
-          {receiptBreakdown && (
-            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-bold">Receipt adjustments</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Distributed proportionally from assigned item shares
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setReceiptBreakdown(null)}
-                  className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+          {/* Equal */}
+          {splitMethod === "equal" && (
+            <section className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+              <div className="p-4">
+                <label
+                  htmlFor="total-expense"
+                  className="text-sm font-semibold"
                 >
-                  Remove
-                </button>
+                  Total Amount (RM)
+                </label>
+
+                <input
+                  id="total-expense"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={totalExpense}
+                  onChange={(event) => setTotalExpense(event.target.value)}
+                  placeholder="0.00"
+                  className="mt-2 h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-500"
+                />
               </div>
 
-              <div className="mt-3 space-y-2 border-t border-blue-500/10 pt-3 text-sm">
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">Item subtotal</span>
-                  <span>RM {itemsTotal.toFixed(2)}</span>
-                </div>
-                {receiptBreakdown.serviceCharge !== 0 && (
-                  <div className="flex justify-between gap-3">
-                    <span className="text-muted-foreground">
-                      Service charge
-                    </span>
-                    <span>
-                      RM {receiptBreakdown.serviceCharge.toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                {receiptBreakdown.tax !== 0 && (
-                  <div className="flex justify-between gap-3">
-                    <span className="text-muted-foreground">Tax</span>
-                    <span>RM {receiptBreakdown.tax.toFixed(2)}</span>
-                  </div>
-                )}
-                {receiptBreakdown.rounding !== 0 && (
-                  <div className="flex justify-between gap-3">
-                    <span className="text-muted-foreground">Rounding</span>
-                    <span>
-                      {receiptBreakdown.rounding < 0 ? "-" : ""}RM {Math.abs(
-                        receiptBreakdown.rounding,
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                )}
+              <div className="border-t border-border">
+                {people
+                  .filter((person) => selectedPeople.includes(person.id))
+                  .map((person, index, list) => (
+                    <div
+                      key={person.id}
+                      className={`flex items-center justify-between px-4 py-3.5 ${
+                        index !== list.length - 1
+                          ? "border-b border-border"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <ProfileAvatar
+                          name={person.name}
+                          avatarColor={person.color}
+                          avatarPath={person.avatarPath}
+                          className="size-9 text-sm"
+                        />
+
+                        <span className="text-sm font-semibold">
+                          {person.name}
+                        </span>
+                      </div>
+
+                      <span className="font-bold">
+                        RM {(equalShares[person.id] ?? 0).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
               </div>
+
+              <div className="flex justify-between border-t border-border bg-white/[0.03] px-4 py-3 text-sm">
+                <span className="text-muted-foreground">Total</span>
+
+                <span className="font-bold">RM {totalAmount.toFixed(2)}</span>
+              </div>
+            </section>
+          )}
+
+          {/* By Amount */}
+          {splitMethod === "amount" && (
+            <section className="mt-4 overflow-hidden rounded-2xl border border-border bg-card">
+              {people
+                .filter((person) => selectedPeople.includes(person.id))
+                .map((person, index, list) => (
+                  <div
+                    key={person.id}
+                    className={`flex items-center justify-between px-4 py-3.5 ${
+                      index !== list.length - 1 ? "border-b border-border" : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ProfileAvatar
+                        name={person.name}
+                        avatarColor={person.color}
+                        avatarPath={person.avatarPath}
+                        className="size-9 text-sm"
+                      />
+
+                      <span className="text-sm font-semibold">
+                        {person.name}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 border-b border-border">
+                      <span className="text-sm text-muted-foreground">RM</span>
+
+                      <input
+                        value={amounts[person.id]}
+                        onChange={(event) =>
+                          updateAmount(person.id, event.target.value)
+                        }
+                        className="w-20 bg-transparent py-1 text-right text-sm font-semibold outline-none"
+                        inputMode="decimal"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+              <div className="flex justify-between border-t border-border bg-white/[0.03] px-4 py-3 text-sm">
+                <span className="text-muted-foreground">Total</span>
+
+                <span className="font-bold">RM {totalAmount.toFixed(2)}</span>
+              </div>
+            </section>
+          )}
+
+          {/* By Items */}
+          {splitMethod === "items" && (
+            <section className="mt-4 space-y-3">
+              {receiptBreakdown && (
+                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold">Receipt adjustments</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Distributed proportionally from assigned item shares
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReceiptBreakdown(null)}
+                      className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="mt-3 space-y-2 border-t border-blue-500/10 pt-3 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted-foreground">
+                        Item subtotal
+                      </span>
+                      <span>RM {itemsTotal.toFixed(2)}</span>
+                    </div>
+                    {receiptBreakdown.serviceCharge !== 0 && (
+                      <div className="flex justify-between gap-3">
+                        <span className="text-muted-foreground">
+                          Service charge
+                        </span>
+                        <span>
+                          RM {receiptBreakdown.serviceCharge.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    {receiptBreakdown.tax !== 0 && (
+                      <div className="flex justify-between gap-3">
+                        <span className="text-muted-foreground">Tax</span>
+                        <span>RM {receiptBreakdown.tax.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {receiptBreakdown.rounding !== 0 && (
+                      <div className="flex justify-between gap-3">
+                        <span className="text-muted-foreground">Rounding</span>
+                        <span>
+                          {receiptBreakdown.rounding < 0 ? "-" : ""}RM{" "}
+                          {Math.abs(receiptBreakdown.rounding).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {items.map((item) => (
+                <ExpenseItemEditor
+                  key={item.id}
+                  item={item}
+                  people={people.filter((person) =>
+                    selectedPeople.includes(person.id),
+                  )}
+                  onUpdate={updateItem}
+                  onRemove={removeItem}
+                  onTogglePerson={toggleItemPerson}
+                  onAddSubItem={addSubItem}
+                  onRemoveSubItem={removeSubItem}
+                  onUpdateSubItem={updateSubItem}
+                />
+              ))}
+
+              <button
+                type="button"
+                onClick={addItem}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card py-3.5 text-sm font-bold transition-colors hover:bg-white/[0.04]"
+              >
+                <Plus className="size-4" />
+                Add Item
+              </button>
+
+              <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-4">
+                <span className="text-sm text-muted-foreground">Total</span>
+
+                <span className="text-sm font-bold">
+                  RM {totalAmount.toFixed(2)}
+                </span>
+              </div>
+            </section>
+          )}
+
+          {error && (
+            <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3">
+              <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
 
-          {items.map((item) => (
-            <ExpenseItemEditor
-              key={item.id}
-              item={item}
-              people={people.filter((person) =>
-                selectedPeople.includes(person.id),
-              )}
-              onUpdate={updateItem}
-              onRemove={removeItem}
-              onTogglePerson={toggleItemPerson}
-              onAddSubItem={addSubItem}
-              onRemoveSubItem={removeSubItem}
-              onUpdateSubItem={updateSubItem}
-            />
-          ))}
-
-          <button
-            type="button"
-            onClick={addItem}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card py-3.5 text-sm font-bold transition-colors hover:bg-white/[0.04]"
-          >
-            <Plus className="size-4" />
-            Add Item
-          </button>
-
-          <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-4">
-            <span className="text-sm text-muted-foreground">Total</span>
-
-            <span className="text-sm font-bold">
-              RM {totalAmount.toFixed(2)}
-            </span>
+          {/* Save */}
+          <div className="mt-6">
+            <button
+              type="button"
+              disabled={!canSave || saving}
+              onClick={handleSave}
+              className="h-14 w-full rounded-2xl bg-blue-600 text-base font-bold text-white shadow-sm transition-all hover:bg-blue-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-blue-600/40 disabled:text-white/60"
+            >
+              {saving ? "Saving..." : "Save Expense"}
+            </button>
           </div>
-        </section>
-      )}
 
-      {error && (
-        <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3">
-          <p className="text-sm text-red-400">{error}</p>
-        </div>
-      )}
-
-      {/* Save */}
-      <div className="mt-6">
-        <button
-          type="button"
-          disabled={!canSave || saving}
-          onClick={handleSave}
-          className="h-14 w-full rounded-2xl bg-blue-600 text-base font-bold text-white shadow-sm transition-all hover:bg-blue-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-blue-600/40 disabled:text-white/60"
-        >
-          {saving ? "Saving..." : "Save Expense"}
-        </button>
-      </div>
-
-      {showReceiptScanner && (
-        <ReceiptImportDialog
-          onClose={() => setShowReceiptScanner(false)}
-          onImport={importReceiptDraft}
-        />
+          {showReceiptScanner && (
+            <ReceiptImportDialog
+              onClose={() => setShowReceiptScanner(false)}
+              onImport={importReceiptDraft}
+            />
+          )}
+        </>
       )}
     </div>
   );
