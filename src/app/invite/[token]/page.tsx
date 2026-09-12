@@ -107,21 +107,23 @@ export default async function InvitePage({ params }: InvitePageProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 border-t border-white/[0.06] px-4 py-4">
-              <div className="flex size-4 shrink-0 items-center justify-center text-muted-foreground">
-                @
-              </div>
+            {invite.email_hint && (
+              <div className="flex items-center gap-3 border-t border-white/[0.06] px-4 py-4">
+                <div className="flex size-4 shrink-0 items-center justify-center text-muted-foreground">
+                  @
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">
-                  Invitation email
-                </p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground">
+                    Invitation email
+                  </p>
 
-                <p className="mt-0.5 truncate text-sm font-semibold">
-                  {invite.email_hint}
-                </p>
+                  <p className="mt-0.5 truncate text-sm font-semibold">
+                    {invite.email_hint}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex items-center gap-3 border-t border-white/[0.06] px-4 py-4">
               <Clock3 className="size-4 shrink-0 text-muted-foreground" />
@@ -140,7 +142,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
           {isPending && !user && (
             <div className="mt-6">
               <p className="text-center text-sm text-muted-foreground">
-                Sign in with the email address this invitation was sent to.
+                Sign in or create an account to claim this one-time invitation.
               </p>
 
               <Link
@@ -172,13 +174,15 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
               <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
                 Accepting this invitation will merge the existing local contact
-                and its transaction history into your account.
+                and its transaction history into your account. Only continue if
+                you are {invite.contact_name}.
               </p>
 
               <AcceptInviteAction token={token} />
 
               <p className="mt-4 text-center text-[11px] leading-relaxed text-muted-foreground">
-                The account email must match the invitation email.
+                This link can only be claimed once and cannot be transferred
+                afterward.
               </p>
             </div>
           )}
