@@ -339,7 +339,7 @@ export type Database = {
           accepted_by: string | null
           claimed_person_id: string | null
           created_at: string
-          email: string
+          email: string | null
           expires_at: string
           group_id: string
           id: string
@@ -355,7 +355,7 @@ export type Database = {
           accepted_by?: string | null
           claimed_person_id?: string | null
           created_at?: string
-          email: string
+          email?: string | null
           expires_at?: string
           group_id: string
           id?: string
@@ -371,7 +371,7 @@ export type Database = {
           accepted_by?: string | null
           claimed_person_id?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           expires_at?: string
           group_id?: string
           id?: string
@@ -911,7 +911,7 @@ export type Database = {
         Returns: string
       }
       create_group_invite: {
-        Args: { p_email: string; p_group_id: string; p_person_id: string }
+        Args: { p_group_id: string; p_person_id: string }
         Returns: string
       }
       create_iou: {
@@ -950,7 +950,7 @@ export type Database = {
         Args: { p_token: string }
         Returns: {
           contact_name: string
-          email_hint: string
+          email_hint: string | null
           expires_at: string
           group_id: string
           group_name: string
@@ -962,7 +962,7 @@ export type Database = {
         Returns: {
           accepted_at: string
           claimed_person_id: string
-          email: string
+          email: string | null
           expires_at: string
           invite_id: string
           person_id: string

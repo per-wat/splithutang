@@ -19,7 +19,7 @@ export type GroupInviteView = {
 
   personName: string;
 
-  email: string;
+  email: string | null;
 
   token: string;
 
@@ -81,8 +81,6 @@ export function GroupInviteManager({
     ? selectedPersonId
     : (localMembers[0]?.id ?? "");
 
-  const [email, setEmail] = useState("");
-
   const [generatedLink, setGeneratedLink] = useState("");
 
   const [copiedValue, setCopiedValue] = useState("");
@@ -92,9 +90,7 @@ export function GroupInviteManager({
   const [error, setError] = useState("");
 
   async function createInvite() {
-    const cleanEmail = email.trim().toLowerCase();
-
-    if (!effectiveSelectedPersonId || !cleanEmail || saving) {
+    if (!effectiveSelectedPersonId || saving) {
       return;
     }
 
@@ -106,8 +102,6 @@ export function GroupInviteManager({
       p_group_id: groupId,
 
       p_person_id: effectiveSelectedPersonId,
-
-      p_email: cleanEmail,
     });
 
     if (error) {
@@ -211,7 +205,8 @@ export function GroupInviteManager({
               <p className="text-sm font-semibold">Invite Local Contact</p>
 
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Link a local contact to their own SplitHutang account.
+                Generate a one-time link for a local contact to claim their
+                SplitHutang identity.
               </p>
             </div>
           </div>
@@ -231,39 +226,17 @@ export function GroupInviteManager({
               className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-blue-500"
             >
               {localMembers.map((person) => (
-                <option
-                  key={person.id}
-                  value={person.id}
-                >
+                <option key={person.id} value={person.id}>
                   {person.name}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="mt-4">
-            <label
-              htmlFor="invite-email"
-              className="text-xs font-semibold text-muted-foreground"
-            >
-              Their Email
-            </label>
-
-            <input
-              id="invite-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="sarah@example.com"
-              autoComplete="email"
-              className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-500"
-            />
-          </div>
-
           <button
             type="button"
             onClick={createInvite}
-            disabled={saving || !effectiveSelectedPersonId || !email.trim()}
+            disabled={saving || !effectiveSelectedPersonId}
             className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
           >
             <Link2 className="size-4" />
@@ -288,7 +261,8 @@ export function GroupInviteManager({
           <p className="text-sm font-semibold text-emerald-400">Invite ready</p>
 
           <p className="mt-1 text-xs text-muted-foreground">
-            Send this link only to the person whose email you entered.
+            Share this link only with the selected person. It expires in 7 days
+            and can only be claimed once.
           </p>
 
           <div className="mt-3 flex items-center gap-2">
@@ -348,7 +322,7 @@ export function GroupInviteManager({
                       </p>
 
                       <p className="mt-1 truncate text-xs text-muted-foreground">
-                        {invite.email}
+                        {invite.email ?? "One-time link"}
                       </p>
                     </div>
 
