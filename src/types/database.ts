@@ -929,6 +929,10 @@ export type Database = {
         Args: { p_avatar_color?: string; p_group_id: string; p_name: string }
         Returns: string
       }
+      delete_local_contact: {
+        Args: { p_person_id: string }
+        Returns: undefined
+      }
       get_expenses_overview: {
         Args: never
         Returns: {
