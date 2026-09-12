@@ -261,7 +261,7 @@ export function NotificationCentre() {
           </div>
           <h2 className="mt-4 font-semibold">You&apos;re all caught up</h2>
           <p className="mt-1 max-w-64 text-sm leading-relaxed text-muted-foreground">
-            Expense, IOU, payment and group updates will appear here.
+            Expense, Hutang, payment and group updates will appear here.
           </p>
         </div>
       ) : (

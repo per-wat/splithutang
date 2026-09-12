@@ -66,6 +66,12 @@ export function IouForm({ groups }: IouFormProps) {
 
   const [error, setError] = useState("");
 
+  const personPaying = people.find((person) => person.id === from);
+
+  const personReceiving = people.find((person) => person.id === to);
+
+  const numericAmount = Number(amount) || 0;
+
   function handleGroupChange(groupId: string) {
     setSelectedGroupId(groupId);
 
@@ -148,7 +154,7 @@ export function IouForm({ groups }: IouFormProps) {
             <ArrowLeft className="size-5" />
           </button>
 
-          <h1 className="text-xl font-bold">Add IOU</h1>
+          <h1 className="text-xl font-bold">Add Hutang</h1>
         </div>
       </header>
 
@@ -157,7 +163,7 @@ export function IouForm({ groups }: IouFormProps) {
           <p className="font-medium">No groups available</p>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Create a group before adding an IOU.
+            Create a group before adding Hutang.
           </p>
         </div>
       ) : (
@@ -191,7 +197,7 @@ export function IouForm({ groups }: IouFormProps) {
           {/* People */}
           <section className="mt-4 rounded-2xl border border-white/[0.06] bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Who owes
+              Who needs to pay?
             </p>
 
             <div className="mt-3">
@@ -207,14 +213,14 @@ export function IouForm({ groups }: IouFormProps) {
 
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <ArrowRight className="size-3" />
-                owes
+                needs to pay
               </div>
 
               <div className="h-px flex-1 bg-border" />
             </div>
 
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Owes to
+              Who should receive the money?
             </p>
 
             <div className="mt-3">
@@ -248,13 +254,26 @@ export function IouForm({ groups }: IouFormProps) {
             />
           </div>
 
+          {personPaying && personReceiving && numericAmount > 0 && (
+            <div className="mt-4 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] px-4 py-3">
+              <p className="text-sm font-medium text-blue-200">
+                {personPaying.name === "You"
+                  ? "You need"
+                  : `${personPaying.name} needs`}{" "}
+                to pay{" "}
+                {personReceiving.name === "You" ? "you" : personReceiving.name}{" "}
+                RM {numericAmount.toFixed(2)}.
+              </p>
+            </div>
+          )}
+
           {/* Reason */}
           <div className="mt-4">
             <label
               htmlFor="reason"
               className="text-sm font-semibold"
             >
-              Reason
+              What was it for?
             </label>
 
             <input
@@ -262,7 +281,7 @@ export function IouForm({ groups }: IouFormProps) {
               type="text"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              placeholder="e.g. Borrowed for lunch"
+              placeholder="e.g. Lunch money"
               className="mt-2 h-11 w-full rounded-2xl border border-border bg-card px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-blue-500"
             />
           </div>
@@ -297,7 +316,7 @@ export function IouForm({ groups }: IouFormProps) {
             onClick={handleSave}
             className="mt-4 h-12 w-full rounded-2xl bg-blue-600 font-semibold text-white transition-all hover:bg-blue-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-blue-600/40 disabled:text-white/60"
           >
-            {saving ? "Saving..." : "Save IOU"}
+            {saving ? "Saving..." : "Save Hutang"}
           </button>
         </>
       )}

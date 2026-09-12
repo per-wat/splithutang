@@ -2,9 +2,9 @@
 
 export const expenseFilters = [
   "All",
-  "Owed to Me",
-  "I Owe",
-  "Settled",
+  "To Receive",
+  "To Pay",
+  "Fully Paid",
 ] as const;
 
 export type ExpenseFilter = (typeof expenseFilters)[number];

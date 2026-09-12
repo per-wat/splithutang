@@ -140,6 +140,13 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
 
   const creditorName = getPersonDisplayName(creditor, user.id);
 
+  const paymentRelationship =
+    debtorName === "You"
+      ? `You need to pay ${creditorName}`
+      : `${debtorName} needs to pay ${
+          creditorName === "You" ? "you" : creditorName
+        }`;
+
   /*
    * ------------------------------------------
    * Payment calculations
@@ -232,13 +239,13 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
         <header className="sticky top-0 z-20 -mx-4 flex items-center gap-3 bg-background px-4 pb-3 pt-6">
           <Link
             href="/ious"
-            aria-label="Back to IOUs"
+            aria-label="Back to Hutang"
             className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="size-5" />
           </Link>
 
-          <h1 className="text-xl font-bold">IOU Details</h1>
+          <h1 className="text-xl font-bold">Hutang Details</h1>
         </header>
 
         {/* Main summary */}
@@ -265,7 +272,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
 
           <div className="mt-5 border-t border-white/[0.06] pt-4">
             <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
-              Remaining
+              Still to pay
             </p>
 
             <p
@@ -284,7 +291,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
 
             {pendingAmount > 0 && (
               <p className="mt-1 text-xs font-medium text-amber-400">
-                RM {pendingAmount.toFixed(2)} pending confirmation
+                RM {pendingAmount.toFixed(2)} waiting for confirmation
               </p>
             )}
 
@@ -318,6 +325,10 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               </div>
             </div>
 
+            <p className="mt-3 text-sm font-medium">
+              {paymentRelationship}
+            </p>
+
             <p
               className={`mt-2 text-xs font-medium ${
                 settled
@@ -330,12 +341,12 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               }`}
             >
               {settled
-                ? "Settled"
+                ? "Fully paid"
                 : hasPendingPayment
-                  ? "Payment pending"
+                  ? "Waiting for confirmation"
                   : hasPartialPayment
-                    ? "Partially paid"
-                    : "Unpaid"}
+                    ? "Partly paid"
+                    : "Not paid yet"}
             </p>
           </div>
         </section>
@@ -343,7 +354,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
         {/* Payment summary */}
         <section className="mt-7">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Payment Summary
+            Payment progress
           </h2>
 
           <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-card">
@@ -361,7 +372,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
             {/* Confirmed */}
             <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3.5">
               <span className="text-sm text-muted-foreground">
-                Confirmed paid
+                Paid and confirmed
               </span>
 
               <span className="text-sm font-semibold text-emerald-400">
@@ -372,7 +383,9 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
             {/* Pending */}
             {pendingAmount > 0 && (
               <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3.5">
-                <span className="text-sm text-muted-foreground">Pending</span>
+                <span className="text-sm text-muted-foreground">
+                  Waiting for confirmation
+                </span>
 
                 <span className="text-sm font-semibold text-amber-400">
                   {formatMoney(pendingAmount)}
@@ -382,7 +395,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
 
             {/* Remaining */}
             <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3.5">
-              <span className="text-sm font-medium">Remaining</span>
+              <span className="text-sm font-medium">Still to pay</span>
 
               <span className="font-bold">{formatMoney(remaining)}</span>
             </div>
@@ -399,6 +412,9 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               remaining={remaining}
               availableToSubmit={availableToSubmit}
               requiresConfirmation={requiresConfirmation}
+              paymentMode={
+                currentUserIsDebtor ? "mark-paid" : "record-received"
+              }
             />
           </div>
         )}
@@ -414,10 +430,10 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               {payments.map((payment, index) => {
                 const statusLabel =
                   payment.status === "confirmed"
-                    ? "Confirmed"
+                    ? "Confirmed received"
                     : payment.status === "pending"
-                      ? "Pending confirmation"
-                      : "Rejected";
+                      ? "Waiting for confirmation"
+                      : "Not received";
 
                 const amountClass =
                   payment.status === "confirmed"
@@ -438,7 +454,11 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-sm font-medium">
-                          {debtorName} → {creditorName}
+                          {debtorName === "You"
+                            ? `You paid ${creditorName}`
+                            : `${debtorName} paid ${
+                                creditorName === "You" ? "you" : creditorName
+                              }`}
                         </p>
 
                         <p className="mt-1 text-xs text-muted-foreground">

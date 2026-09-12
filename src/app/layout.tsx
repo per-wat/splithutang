@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     default: "SplitHutang",
     template: "%s · SplitHutang",
   },
-  description: "Share expenses and keep track of what is owed.",
+  description: "Share expenses and keep track of money to pay and receive.",
   formatDetection: {
     telephone: false,
   },

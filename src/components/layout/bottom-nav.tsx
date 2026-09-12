@@ -26,7 +26,7 @@ const navItems = [
     icon: Receipt,
   },
   {
-    label: "IOUs",
+    label: "Hutang",
     href: "/ious",
     icon: FileText,
   },
@@ -123,9 +123,9 @@ export function BottomNav() {
             </div>
 
             <div>
-              <p className="font-semibold">Add IOU</p>
+              <p className="font-semibold">Add Hutang</p>
               <p className="mt-0.5 text-xs text-zinc-400">
-                Track a personal debt
+                Record money between two people
               </p>
             </div>
           </button>

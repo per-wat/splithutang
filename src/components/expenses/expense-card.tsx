@@ -15,17 +15,17 @@ function formatCurrency(amount: number) {
 
 const statusStyles = {
   "owed-to-me": {
-    label: "Owed to you",
+    label: "You will receive",
     className: "text-emerald-400",
   },
 
   "i-owe": {
-    label: "You owe",
+    label: "You need to pay",
     className: "text-red-400",
   },
 
   settled: {
-    label: "Settled",
+    label: "Fully paid",
     className: "text-muted-foreground",
   },
 
@@ -66,7 +66,11 @@ export function ExpenseCard({
 
         {unpaidCount !== undefined && unpaidCount > 0 && (
           <span className="text-xs text-muted-foreground">
-            {unpaidCount} unpaid
+            {unpaidCount}{" "}
+            {unpaidCount === 1
+              ? "person still needs"
+              : "people still need"}{" "}
+            to pay
           </span>
         )}
       </div>

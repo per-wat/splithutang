@@ -84,10 +84,12 @@ export function GroupSettingsForm({
 
       <div className="flex items-start justify-between gap-4 rounded-2xl bg-white/[0.03] p-4">
         <div>
-          <p className="text-sm font-semibold">Debtor self-confirm</p>
+          <p className="text-sm font-semibold">
+            Skip receiver confirmation
+          </p>
 
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Allow debtors to confirm their own payments immediately.
+            Accept payments immediately after someone marks them as paid.
           </p>
         </div>
 

@@ -26,13 +26,13 @@ const PAGE_SIZE = 30;
 
 function matchesFilter(iou: IouOverview, filter: IouFilter) {
   switch (filter) {
-    case "Owed to Me":
+    case "To Receive":
       return iou.status === "owed-to-me";
 
-    case "I Owe":
+    case "To Pay":
       return iou.status === "i-owe";
 
-    case "Settled":
+    case "Fully Paid":
       return iou.status === "settled";
 
     case "All":
@@ -98,10 +98,10 @@ export function IousList({ ious }: IousListProps) {
           </>
         ) : (
           <div className="rounded-2xl border border-white/[0.08] bg-card px-4 py-10 text-center">
-            <p className="font-medium">No IOUs found</p>
+            <p className="font-medium">No Hutang found</p>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              No IOUs match this filter.
+              No Hutang matches this filter.
             </p>
           </div>
         )}

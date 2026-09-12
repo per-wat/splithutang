@@ -26,13 +26,13 @@ const PAGE_SIZE = 30;
 
 function matchesFilter(expense: ExpenseOverview, filter: ExpenseFilter) {
   switch (filter) {
-    case "Owed to Me":
+    case "To Receive":
       return expense.status === "owed-to-me";
 
-    case "I Owe":
+    case "To Pay":
       return expense.status === "i-owe";
 
-    case "Settled":
+    case "Fully Paid":
       return expense.status === "settled";
 
     case "All":

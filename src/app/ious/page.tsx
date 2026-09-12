@@ -43,7 +43,7 @@ export default async function IousPage() {
 
         <div className="px-5 pt-8">
           <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-            <p className="font-medium text-red-400">Unable to load IOUs</p>
+            <p className="font-medium text-red-400">Unable to load Hutang</p>
 
             <p className="mt-1 text-sm text-muted-foreground">
               Please try again later.
