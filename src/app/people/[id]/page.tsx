@@ -11,6 +11,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly, formatTimestampDateMY } from "@/lib/date-format";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { DeleteLocalContactAction } from "@/components/people/delete-local-contact-action";
 
 type PersonDetailPageProps = {
   params: Promise<{
@@ -146,7 +147,9 @@ export default async function PersonDetailPage({
   ] = await Promise.all([
     supabase
       .from("people")
-      .select("id, name, avatar_color, avatar_path, linked_user_id")
+      .select(
+        "id, name, avatar_color, avatar_path, linked_user_id, owner_id",
+      )
       .eq("id", id)
       .maybeSingle(),
 
@@ -214,6 +217,9 @@ export default async function PersonDetailPage({
 
   const target = targetResult.data;
   const self = selfResult.data;
+
+  const isOwnedLocalContact =
+    target.owner_id === user.id && target.linked_user_id === null;
 
   /*
    * Don't allow /people/<your-own-id>.
@@ -709,6 +715,13 @@ export default async function PersonDetailPage({
             }
           />
         </section>
+
+        {isOwnedLocalContact && (
+          <DeleteLocalContactAction
+            personId={target.id}
+            personName={target.name}
+          />
+        )}
       </div>
     </main>
   );
