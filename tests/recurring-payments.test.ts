@@ -9,7 +9,15 @@ import {
 } from "../src/lib/recurring.ts";
 
 const migration = readFileSync(
-  new URL("../supabase/migrations/20260913144724_recurring_payments.sql", import.meta.url),
+  new URL("../supabase/migrations/20260913153006_recurring_payments.sql", import.meta.url),
+  "utf8",
+);
+
+const demoSeed = readFileSync(
+  new URL(
+    "../supabase/migrations/20260913153529_seed_recurring_demo_dev.sql",
+    import.meta.url,
+  ),
   "utf8",
 );
 
@@ -84,4 +92,12 @@ test("recurring tables are RLS protected and writes are RPC-only", () => {
   assert.match(migration, /revoke all on public\.recurring_arrangements[\s\S]+from anon, authenticated/i);
   assert.match(migration, /private\.can_view_recurring/i);
   assert.match(migration, /membership_status = 'active'/i);
+});
+
+test("visual fixtures are hard-guarded to the SplitHutangDev identities", () => {
+  assert.match(demoSeed, /DEV-ONLY visual fixture for Supabase project hnkmtlbldaiesebsqjkk/i);
+  assert.match(demoSeed, /count\(distinct split_part\(email, '@', 1\)\) <> 10/i);
+  assert.match(demoSeed, /perf\\\.user\(0\[1-9\]\|10\)/i);
+  assert.match(demoSeed, /Skipping SplitHutangDev recurring fixtures/i);
+  assert.match(demoSeed, /delete from public\.groups where id = v_group/i);
 });
