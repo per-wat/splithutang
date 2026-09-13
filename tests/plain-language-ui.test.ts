@@ -84,12 +84,14 @@ test("transaction cards show the group name without extra page queries", () => {
   const expenseCard = source("src/components/expenses/expense-card.tsx");
   const hutangCard = source("src/components/ious/iou-card.tsx");
   const recentActivity = source("src/components/home/recent-activity.tsx");
+  const recurringCard = source("src/components/recurring/recurring-card.tsx");
 
   assert.match(homePage, /get_recent_activity_with_group/);
   assert.match(expensesPage, /get_expenses_overview_with_group/);
   assert.match(hutangPage, /get_ious_overview_with_group/);
 
-  for (const card of [expenseCard, hutangCard, recentActivity]) {
-    assert.match(card, /Group: \{.*groupName\}/);
+  for (const card of [expenseCard, hutangCard, recentActivity, recurringCard]) {
+    assert.match(card, /\{.*groupName\}/);
+    assert.doesNotMatch(card, /Group: \{.*groupName\}/);
   }
 });

@@ -28,7 +28,7 @@ export function RecurringCard({ item, year }: { item: RecurringOverview; year: n
               <div className="min-w-0">
                 <h2 className="truncate font-bold">{item.name}</h2>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                  Group: {item.groupName} · Bill paid by {item.payerName}
+                  {item.groupName} · Bill paid by {item.payerName}
                 </p>
               </div>
               <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-semibold ${statusCopy.className}`}>

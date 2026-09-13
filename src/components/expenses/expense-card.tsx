@@ -58,7 +58,7 @@ export function ExpenseCard({
           </p>
 
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            Group: {groupName}
+            {groupName}
           </p>
         </div>
 
