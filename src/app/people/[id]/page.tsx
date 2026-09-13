@@ -286,10 +286,10 @@ export default async function PersonDetailPage({
 
   const balanceLabel =
     netBalance > 0
-      ? `${target.name} owes you`
+      ? `${target.name} needs to pay you`
       : netBalance < 0
-        ? `You owe ${target.name}`
-        : "All settled";
+        ? `You need to pay ${target.name}`
+        : "Nothing to pay";
 
   const balanceClass =
     netBalance > 0
@@ -328,7 +328,7 @@ export default async function PersonDetailPage({
               <h2 className="truncate text-xl font-bold">{target.name}</h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Your balance together
+                Money between you and {target.name}
               </p>
             </div>
           </div>
@@ -357,7 +357,9 @@ export default async function PersonDetailPage({
             <div className="rounded-xl bg-white/[0.04] px-2 py-3 text-center">
               <p className="text-lg font-bold">{iouTotal}</p>
 
-              <p className="mt-0.5 text-[11px] text-muted-foreground">IOUs</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Hutang
+              </p>
             </div>
 
             <div className="rounded-xl bg-white/[0.04] px-2 py-3 text-center">
@@ -407,11 +409,11 @@ export default async function PersonDetailPage({
                   relationshipAmount = remaining;
 
                   if (remaining > 0) {
-                    relationshipText = `${target.name} owes you`;
+                    relationshipText = `${target.name} needs to pay you`;
 
                     relationshipClass = "text-emerald-400";
                   } else {
-                    relationshipText = "Settled";
+                    relationshipText = "Fully paid";
 
                     relationshipClass = "text-muted-foreground";
                   }
@@ -427,11 +429,11 @@ export default async function PersonDetailPage({
                   relationshipAmount = remaining;
 
                   if (remaining > 0) {
-                    relationshipText = `You owe ${target.name}`;
+                    relationshipText = `You need to pay ${target.name}`;
 
                     relationshipClass = "text-red-400";
                   } else {
-                    relationshipText = "Settled";
+                    relationshipText = "Fully paid";
 
                     relationshipClass = "text-muted-foreground";
                   }
@@ -513,11 +515,11 @@ export default async function PersonDetailPage({
           />
         </section>
 
-        {/* IOUs */}
+        {/* Hutang */}
         <section className="mt-7">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              IOUs
+              Hutang
             </h2>
 
             <span className="text-xs text-muted-foreground">{iouTotal}</span>
@@ -586,10 +588,10 @@ export default async function PersonDetailPage({
                           }`}
                         >
                           {settled
-                            ? "Settled"
+                            ? "Fully paid"
                             : targetOwes
-                              ? `${target.name} owes you`
-                              : `You owe ${target.name}`}
+                              ? `${target.name} needs to pay you`
+                              : `You need to pay ${target.name}`}
                         </p>
                       </div>
                     </div>
@@ -602,7 +604,7 @@ export default async function PersonDetailPage({
               <FileText className="mx-auto size-5 text-muted-foreground" />
 
               <p className="mt-2 text-sm text-muted-foreground">
-                No IOUs between you yet.
+                No Hutang between you yet.
               </p>
             </div>
           )}

@@ -58,7 +58,7 @@ export function PaymentReviewActions({
           onClick={() => review("confirmed")}
           className="flex-1 rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/25 disabled:opacity-50"
         >
-          {saving === "confirmed" ? "Confirming..." : "Confirm"}
+          {saving === "confirmed" ? "Confirming..." : "Confirm received"}
         </button>
 
         <button
@@ -67,7 +67,7 @@ export function PaymentReviewActions({
           onClick={() => review("rejected")}
           className="flex-1 rounded-xl bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50"
         >
-          {saving === "rejected" ? "Rejecting..." : "Reject"}
+          {saving === "rejected" ? "Saving..." : "Not received"}
         </button>
       </div>
 

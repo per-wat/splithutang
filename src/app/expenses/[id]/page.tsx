@@ -321,6 +321,10 @@ export default async function ExpenseDetailPage({
       const requiresConfirmation =
         currentUserIsDebtor && !(group?.allow_debtor_self_confirm ?? false);
 
+      const paymentMode = currentUserIsDebtor
+        ? ("mark-paid" as const)
+        : ("record-received" as const);
+
       return {
         person,
         shareAmount,
@@ -331,6 +335,7 @@ export default async function ExpenseDetailPage({
         pendingAmount,
         availableToSubmit,
         requiresConfirmation,
+        paymentMode,
       };
     })
     .filter(
@@ -459,7 +464,7 @@ export default async function ExpenseDetailPage({
         {/* Participants */}
         <section className="mt-7">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Split Details
+            Everyone&apos;s share
           </h2>
 
           <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-card">
@@ -487,6 +492,8 @@ export default async function ExpenseDetailPage({
                   pendingAmount={participant.pendingAmount}
                   availableToSubmit={participant.availableToSubmit}
                   requiresConfirmation={participant.requiresConfirmation}
+                  paymentMode={participant.paymentMode}
+                  receiverName={payer.displayName}
                 />
               </div>
             ))}
@@ -603,10 +610,10 @@ export default async function ExpenseDetailPage({
 
                 const statusLabel =
                   payment.status === "confirmed"
-                    ? "Confirmed"
+                    ? "Confirmed received"
                     : payment.status === "pending"
-                      ? "Pending confirmation"
-                      : "Rejected";
+                      ? "Waiting for confirmation"
+                      : "Not received";
 
                 const amountClass =
                   payment.status === "confirmed"
@@ -627,8 +634,13 @@ export default async function ExpenseDetailPage({
                     <div className="flex justify-between gap-4">
                       <div>
                         <p className="text-sm font-medium">
-                          {from?.displayName ?? "Unknown"} →{" "}
-                          {to?.displayName ?? "Unknown"}
+                          {from?.displayName === "You"
+                            ? `You paid ${to?.displayName ?? "Unknown"}`
+                            : `${from?.displayName ?? "Unknown"} paid ${
+                                to?.displayName === "You"
+                                  ? "you"
+                                  : (to?.displayName ?? "Unknown")
+                              }`}
                         </p>
 
                         <p className="mt-1 text-xs text-muted-foreground">

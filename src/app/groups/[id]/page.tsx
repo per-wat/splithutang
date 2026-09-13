@@ -395,7 +395,7 @@ export default async function GroupDetailPage({
                 </p>
 
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  Existing expenses, IOUs and repayments remain available. New
+                  Existing expenses, Hutang and payments remain available. New
                   activity is disabled until this group is restored.
                 </p>
               </div>
@@ -410,20 +410,20 @@ export default async function GroupDetailPage({
           </p>
 
           <p className="mt-2 text-sm">
-            Debtor self-confirm is{" "}
+            Receiver confirmation is{" "}
             <span
               className={`font-semibold ${
                 group.allow_debtor_self_confirm ? "text-emerald-400" : ""
               }`}
             >
-              {group.allow_debtor_self_confirm ? "enabled" : "disabled"}
+              {group.allow_debtor_self_confirm ? "not required" : "required"}
             </span>
           </p>
 
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             {group.allow_debtor_self_confirm
-              ? "Members can confirm their own payments immediately."
-              : "Payments submitted by a debtor require confirmation from the receiver."}
+              ? "Payments are completed immediately when marked as paid."
+              : "The person receiving the money must confirm each payment."}
           </p>
         </section>
 

@@ -3,6 +3,7 @@ export type IouStatus = "owed-to-me" | "i-owe" | "settled" | "group";
 type IouCardProps = {
   title: string;
   date: string;
+  groupName: string;
   from: string;
   to: string;
   amount: number;
@@ -16,22 +17,22 @@ function formatCurrency(amount: number) {
 
 const statusStyles = {
   "owed-to-me": {
-    label: "Owed to you",
+    label: "You will receive",
     className: "text-emerald-400",
   },
 
   "i-owe": {
-    label: "You owe",
+    label: "You need to pay",
     className: "text-red-400",
   },
 
   settled: {
-    label: "Settled",
+    label: "Fully paid",
     className: "text-muted-foreground",
   },
 
   group: {
-    label: "Group IOU",
+    label: "Between group members",
     className: "text-blue-400",
   },
 };
@@ -39,6 +40,7 @@ const statusStyles = {
 export function IouCard({
   title,
   date,
+  groupName,
   from,
   to,
   amount,
@@ -56,7 +58,12 @@ export function IouCard({
           <h3 className="truncate font-semibold">{title}</h3>
 
           <p className="mt-1 text-xs text-muted-foreground">
-            {from} → {to} · {date}
+            {from === "You" ? "You need" : `${from} needs`} to pay{" "}
+            {to === "You" ? "you" : to} · {date}
+          </p>
+
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            Group: {groupName}
           </p>
         </div>
 

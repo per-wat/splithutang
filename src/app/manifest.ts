@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "SplitHutang",
     short_name: "SplitHutang",
-    description: "Share expenses and keep track of what is owed.",
+    description: "Share expenses and keep track of money to pay and receive.",
     start_url: "/",
     scope: "/",
     display: "standalone",

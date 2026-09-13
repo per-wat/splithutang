@@ -177,11 +177,13 @@ export function CreateGroupForm({ people }: CreateGroupFormProps) {
         <section className="mt-6 rounded-2xl border border-white/[0.08] bg-card p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold">Debtor self-confirm</p>
+              <p className="text-sm font-semibold">
+                Skip receiver confirmation
+              </p>
 
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                When enabled, debtors can confirm their own payments without
-                waiting for the receiver.
+                Payments are accepted immediately after someone marks them as
+                paid.
               </p>
             </div>
 

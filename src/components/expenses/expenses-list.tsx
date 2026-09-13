@@ -12,6 +12,7 @@ export type ExpenseOverview = {
   id: string;
   title: string;
   date: string;
+  groupName: string;
   paidBy: string;
   amount: number;
   status: ExpenseStatus;
@@ -26,13 +27,13 @@ const PAGE_SIZE = 30;
 
 function matchesFilter(expense: ExpenseOverview, filter: ExpenseFilter) {
   switch (filter) {
-    case "Owed to Me":
+    case "To Receive":
       return expense.status === "owed-to-me";
 
-    case "I Owe":
+    case "To Pay":
       return expense.status === "i-owe";
 
-    case "Settled":
+    case "Fully Paid":
       return expense.status === "settled";
 
     case "All":
@@ -80,6 +81,7 @@ export function ExpensesList({ expenses }: ExpensesListProps) {
                 <ExpenseCard
                   title={expense.title}
                   date={expense.date}
+                  groupName={expense.groupName}
                   paidBy={expense.paidBy}
                   amount={expense.amount}
                   status={expense.status}

@@ -13,6 +13,7 @@ type RecordIouPaymentFormProps = {
   remaining: number;
   availableToSubmit: number;
   requiresConfirmation: boolean;
+  paymentMode: "mark-paid" | "record-received";
   onClose: () => void;
 };
 
@@ -23,6 +24,7 @@ export function RecordIouPaymentForm({
   remaining,
   availableToSubmit,
   requiresConfirmation,
+  paymentMode,
   onClose,
 }: RecordIouPaymentFormProps) {
   const router = useRouter();
@@ -40,6 +42,8 @@ export function RecordIouPaymentForm({
     numericAmount > 0 && numericAmount <= availableToSubmit && !saving;
 
   const pendingReserved = Math.max(remaining - availableToSubmit, 0);
+
+  const isMarkingOwnPayment = paymentMode === "mark-paid";
 
   async function handleSave() {
     if (!canSave) return;
@@ -77,11 +81,17 @@ export function RecordIouPaymentForm({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold">
-              {requiresConfirmation ? "Submit Payment" : "Record Payment"}
+              {isMarkingOwnPayment
+                ? "Mark as paid"
+                : "Record payment received"}
             </h2>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              {debtorName} → {creditorName}
+              {debtorName === "You"
+                ? `You need to pay ${creditorName}`
+                : `${debtorName} needs to pay ${
+                    creditorName === "You" ? "you" : creditorName
+                  }`}
             </p>
           </div>
 
@@ -96,12 +106,13 @@ export function RecordIouPaymentForm({
         </div>
 
         <div className="mt-5 rounded-2xl bg-white/[0.04] px-4 py-3">
-          <p className="text-xs text-muted-foreground">Remaining debt</p>
+          <p className="text-xs text-muted-foreground">Still to pay</p>
           <p className="mt-1 text-lg font-bold">RM {remaining.toFixed(2)}</p>
 
           {pendingReserved > 0 && (
             <p className="mt-1 text-xs text-amber-400">
-              RM {pendingReserved.toFixed(2)} is already pending confirmation.
+              RM {pendingReserved.toFixed(2)} is already waiting for
+              confirmation.
             </p>
           )}
         </div>
@@ -109,8 +120,8 @@ export function RecordIouPaymentForm({
         {requiresConfirmation && (
           <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
             <p className="text-xs text-amber-300">
-              This payment will remain pending until the person receiving the
-              money confirms it.
+              This only records the payment in SplitHutang. {creditorName} must
+              confirm receiving it.
             </p>
           </div>
         )}
@@ -137,7 +148,7 @@ export function RecordIouPaymentForm({
 
           {numericAmount > availableToSubmit && (
             <p className="mt-2 text-xs text-red-400">
-              Payment cannot exceed RM {availableToSubmit.toFixed(2)}.
+              Enter RM {availableToSubmit.toFixed(2)} or less.
             </p>
           )}
         </div>
@@ -177,9 +188,9 @@ export function RecordIouPaymentForm({
         >
           {saving
             ? "Saving..."
-            : requiresConfirmation
-              ? "Submit Payment"
-              : "Record Payment"}
+            : isMarkingOwnPayment
+              ? "I’ve paid"
+              : "Mark as received"}
         </button>
       </div>
     </div>
