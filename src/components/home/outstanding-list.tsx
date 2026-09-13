@@ -23,7 +23,7 @@ export function OutstandingList({ people }: OutstandingListProps) {
     <section className="px-5 pt-8">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          Outstanding
+          Money to receive
         </h2>
 
         <span className="text-xs text-muted-foreground">
@@ -54,7 +54,7 @@ export function OutstandingList({ people }: OutstandingListProps) {
                   <p className="truncate font-medium">{person.name}</p>
 
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    owes you
+                    Needs to pay you
                   </p>
                 </div>
               </div>
@@ -68,7 +68,7 @@ export function OutstandingList({ people }: OutstandingListProps) {
       ) : (
         <div className="rounded-2xl border border-white/[0.08] bg-card px-4 py-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Nobody owes you right now.
+            Nobody needs to pay you right now.
           </p>
         </div>
       )}

@@ -661,9 +661,9 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
             </div>
           </section>
 
-          {/* Paid by */}
+          {/* Person who paid */}
           <section className="mt-7">
-            <h2 className="mb-3 text-sm font-bold">Paid By</h2>
+            <h2 className="mb-3 text-sm font-bold">Who paid?</h2>
 
             <div className="flex flex-wrap gap-2">
               {people.map((person) => {
@@ -694,9 +694,11 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
             </div>
           </section>
 
-          {/* Who is involved */}
+          {/* People sharing the expense */}
           <section className="mt-7">
-            <h2 className="mb-3 text-sm font-bold">With Who?</h2>
+            <h2 className="mb-3 text-sm font-bold">
+              Who shared this expense?
+            </h2>
 
             <ExpensePeopleSelector
               people={people}
@@ -708,7 +710,9 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
 
           {/* Split method */}
           <section className="mt-7">
-            <h2 className="mb-3 text-sm font-bold">How to Split</h2>
+            <h2 className="mb-3 text-sm font-bold">
+              How should it be divided?
+            </h2>
 
             <div className="grid grid-cols-3 gap-2">
               {[

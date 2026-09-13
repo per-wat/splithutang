@@ -46,7 +46,11 @@ export function PersonCard({
                 : "text-red-400"
           }`}
         >
-          {isSettled ? "Settled" : isPositive ? "Owes you" : "You owe"}
+          {isSettled
+            ? "Nothing to pay"
+            : isPositive
+              ? "Needs to pay you"
+              : "You need to pay"}
         </p>
       </div>
 

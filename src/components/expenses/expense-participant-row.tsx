@@ -25,6 +25,8 @@ type ExpenseParticipantRowProps = {
   isPayer: boolean;
   canRecordPayment: boolean;
   requiresConfirmation: boolean;
+  paymentMode: "mark-paid" | "record-received";
+  receiverName: string;
 };
 
 export function ExpenseParticipantRow({
@@ -38,6 +40,8 @@ export function ExpenseParticipantRow({
   isPayer,
   canRecordPayment,
   requiresConfirmation,
+  paymentMode,
+  receiverName,
 }: ExpenseParticipantRowProps) {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
@@ -61,20 +65,22 @@ export function ExpenseParticipantRow({
 
                 {isPayer ? (
                   <p className="mt-0.5 text-xs text-blue-400">
-                    Paid the expense
+                    Paid for the expense
                   </p>
                 ) : settled ? (
-                  <p className="mt-0.5 text-xs text-emerald-400">Settled</p>
+                  <p className="mt-0.5 text-xs text-emerald-400">
+                    Fully paid
+                  </p>
                 ) : pendingAmount > 0 ? (
                   <p className="mt-0.5 text-xs text-amber-400">
-                    Payment pending
+                    Waiting for confirmation
                   </p>
                 ) : paidAmount > 0 ? (
                   <p className="mt-0.5 text-xs text-amber-400">
-                    Partially paid
+                    Partly paid
                   </p>
                 ) : (
-                  <p className="mt-0.5 text-xs text-red-400">Unpaid</p>
+                  <p className="mt-0.5 text-xs text-red-400">Not paid yet</p>
                 )}
               </div>
 
@@ -85,17 +91,17 @@ export function ExpenseParticipantRow({
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div className="space-y-1 text-xs text-muted-foreground">
                   {paidAmount > 0 && (
-                    <p>Confirmed paid: RM {paidAmount.toFixed(2)}</p>
+                    <p>Paid and confirmed: RM {paidAmount.toFixed(2)}</p>
                   )}
 
                   {pendingAmount > 0 && (
                     <p className="text-amber-400">
-                      Pending: RM {pendingAmount.toFixed(2)}
+                      Waiting for confirmation: RM {pendingAmount.toFixed(2)}
                     </p>
                   )}
 
                   <p>
-                    Remaining:{" "}
+                    Still to pay:{" "}
                     <span
                       className={
                         remaining > 0
@@ -114,7 +120,9 @@ export function ExpenseParticipantRow({
                     onClick={() => setShowPaymentForm(true)}
                     className="shrink-0 rounded-xl bg-blue-600/10 px-3 py-2 text-xs font-semibold text-blue-400 transition-colors hover:bg-blue-600/20"
                   >
-                    {requiresConfirmation ? "Submit Payment" : "Record Payment"}
+                    {paymentMode === "mark-paid"
+                      ? "I’ve paid"
+                      : "Mark as received"}
                   </button>
                 )}
               </div>
@@ -131,6 +139,8 @@ export function ExpenseParticipantRow({
           remaining={remaining}
           availableToSubmit={availableToSubmit}
           requiresConfirmation={requiresConfirmation}
+          paymentMode={paymentMode}
+          receiverName={receiverName}
           onClose={() => setShowPaymentForm(false)}
         />
       )}

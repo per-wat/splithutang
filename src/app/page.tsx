@@ -44,7 +44,7 @@ export default async function Home() {
 
     supabase.rpc("get_people_balances"),
 
-    supabase.rpc("get_recent_activity", {
+    supabase.rpc("get_recent_activity_with_group", {
       p_limit: 5,
     }),
   ]);
@@ -167,6 +167,7 @@ export default async function Home() {
     type: activity.activity_type === "iou" ? "iou" : "expense",
     title: activity.title,
     date: formatDateOnly(activity.activity_date),
+    groupName: activity.group_name,
     amount: Number(activity.amount),
     createdAt: activity.created_at,
   }));

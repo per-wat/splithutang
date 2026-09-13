@@ -32,7 +32,7 @@ export default async function IousPage() {
     redirect("/login");
   }
 
-  const { data, error } = await supabase.rpc("get_ious_overview");
+  const { data, error } = await supabase.rpc("get_ious_overview_with_group");
 
   if (error) {
     console.error("Failed to load IOUs:", error);
@@ -43,7 +43,7 @@ export default async function IousPage() {
 
         <div className="px-5 pt-8">
           <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-            <p className="font-medium text-red-400">Unable to load IOUs</p>
+            <p className="font-medium text-red-400">Unable to load Hutang</p>
 
             <p className="mt-1 text-sm text-muted-foreground">
               Please try again later.
@@ -58,6 +58,7 @@ export default async function IousPage() {
     id: iou.iou_id,
     title: iou.reason,
     date: formatDateOnly(iou.iou_date),
+    groupName: iou.group_name,
     from: iou.from_name,
     to: iou.to_name,
 

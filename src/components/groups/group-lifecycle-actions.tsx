@@ -48,7 +48,7 @@ export function GroupLifecycleActions({
     }
 
     const confirmed = window.confirm(
-      "Archive this group? Existing expenses, IOUs and payments will remain available, but no new transactions can be created until the group is restored.",
+      "Archive this group? Existing expenses, Hutang and payments will remain available, but no new transactions can be created until the group is restored.",
     );
 
     if (!confirmed) {
@@ -104,7 +104,7 @@ export function GroupLifecycleActions({
     }
 
     const confirmed = window.confirm(
-      "Leave this group? You will keep access to your historical expenses and IOUs, but you will no longer be an active member.",
+      "Leave this group? You will keep access to your historical expenses and Hutang, but you will no longer be an active member.",
     );
 
     if (!confirmed) {
@@ -196,7 +196,7 @@ export function GroupLifecycleActions({
 
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                   {isArchived
-                    ? "Restore this group to allow new expenses, IOUs, members and invitations."
+                    ? "Restore this group to allow new expenses, Hutang, members and invitations."
                     : "Archiving stops new activity while preserving all financial history and repayments."}
                 </p>
               </div>
@@ -284,7 +284,7 @@ export function GroupLifecycleActions({
 
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                   You can leave once all money involving you in this group has
-                  been settled.
+                  been fully paid.
                 </p>
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-export const iouFilters = ["All", "Owed to Me", "I Owe", "Settled"] as const;
+export const iouFilters = ["All", "To Receive", "To Pay", "Fully Paid"] as const;
 
 export type IouFilter = (typeof iouFilters)[number];
 

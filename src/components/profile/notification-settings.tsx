@@ -16,12 +16,12 @@ const modes: Array<{ value: PushMode; label: string; description: string }> = [
   {
     value: "all_important",
     label: "All important notifications",
-    description: "Push expense, IOU, payment and group activity to subscribed devices.",
+    description: "Push expense, Hutang, payment and group activity to subscribed devices.",
   },
   {
     value: "payments_only",
-    label: "Payment and settlement updates only",
-    description: "Push only payment submissions, confirmations and settlements.",
+    label: "Payment updates only",
+    description: "Push only payments, confirmations and fully paid updates.",
   },
 ];
 

@@ -946,6 +946,20 @@ export type Database = {
           unpaid_count: number
         }[]
       }
+      get_expenses_overview_with_group: {
+        Args: never
+        Returns: {
+          created_at: string
+          expense_date: string
+          expense_id: string
+          group_name: string
+          name: string
+          paid_by_name: string
+          status: string
+          total_amount: number
+          unpaid_count: number
+        }[]
+      }
       get_group_invite_preview: {
         Args: { p_token: string }
         Returns: {
@@ -996,6 +1010,21 @@ export type Database = {
         Returns: {
           created_at: string
           from_name: string
+          iou_date: string
+          iou_id: string
+          original_amount: number
+          outstanding_amount: number
+          reason: string
+          status: string
+          to_name: string
+        }[]
+      }
+      get_ious_overview_with_group: {
+        Args: never
+        Returns: {
+          created_at: string
+          from_name: string
+          group_name: string
           iou_date: string
           iou_id: string
           original_amount: number
@@ -1069,6 +1098,18 @@ export type Database = {
           activity_type: string
           amount: number
           created_at: string
+          title: string
+        }[]
+      }
+      get_recent_activity_with_group: {
+        Args: { p_limit?: number }
+        Returns: {
+          activity_date: string
+          activity_id: string
+          activity_type: string
+          amount: number
+          created_at: string
+          group_name: string
           title: string
         }[]
       }

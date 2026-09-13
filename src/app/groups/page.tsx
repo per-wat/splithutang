@@ -106,7 +106,7 @@ export default async function GroupsPage() {
                     </p>
 
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Debtor self-confirm:{" "}
+                      Receiver confirmation:{" "}
                       <span
                         className={
                           group.allow_debtor_self_confirm
@@ -114,7 +114,9 @@ export default async function GroupsPage() {
                             : ""
                         }
                       >
-                        {group.allow_debtor_self_confirm ? "On" : "Off"}
+                        {group.allow_debtor_self_confirm
+                          ? "Not required"
+                          : "Required"}
                       </span>
                     </p>
                   </div>

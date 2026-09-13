@@ -11,6 +11,7 @@ type IouPaymentActionProps = {
   remaining: number;
   availableToSubmit: number;
   requiresConfirmation: boolean;
+  paymentMode: "mark-paid" | "record-received";
 };
 
 export function IouPaymentAction({
@@ -20,6 +21,7 @@ export function IouPaymentAction({
   remaining,
   availableToSubmit,
   requiresConfirmation,
+  paymentMode,
 }: IouPaymentActionProps) {
   const [open, setOpen] = useState(false);
 
@@ -30,7 +32,7 @@ export function IouPaymentAction({
         onClick={() => setOpen(true)}
         className="h-12 w-full rounded-2xl bg-blue-600 font-semibold text-white transition-all hover:bg-blue-500 active:scale-[0.99]"
       >
-        {requiresConfirmation ? "Submit Payment" : "Record Payment"}
+        {paymentMode === "mark-paid" ? "I’ve paid" : "Mark as received"}
       </button>
 
       {open && (
@@ -41,6 +43,7 @@ export function IouPaymentAction({
           remaining={remaining}
           availableToSubmit={availableToSubmit}
           requiresConfirmation={requiresConfirmation}
+          paymentMode={paymentMode}
           onClose={() => setOpen(false)}
         />
       )}
