@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type PaymentReviewActionsProps = {
-  kind: "expense" | "iou";
+  kind: "expense" | "iou" | "recurring";
   paymentId: string;
 };
 
@@ -33,7 +33,12 @@ export function PaymentReviewActions({
             p_payment_id: paymentId,
             p_decision: decision,
           })
-        : await supabase.rpc("review_iou_payment", {
+        : kind === "iou"
+          ? await supabase.rpc("review_iou_payment", {
+              p_payment_id: paymentId,
+              p_decision: decision,
+            })
+          : await supabase.rpc("review_recurring_payment", {
             p_payment_id: paymentId,
             p_decision: decision,
           });

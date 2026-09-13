@@ -929,6 +929,20 @@ export type Database = {
         Args: { p_avatar_color?: string; p_group_id: string; p_name: string }
         Returns: string
       }
+      create_recurring_arrangement: {
+        Args: {
+          p_end_date: string | null
+          p_frequency: Database["public"]["Enums"]["recurring_frequency"]
+          p_group_id: string
+          p_name: string
+          p_participants: Json
+          p_payer_person_id: string
+          p_start_date: string
+          p_due_day: number
+          p_total_amount: number
+        }
+        Returns: string
+      }
       delete_local_contact: {
         Args: { p_person_id: string }
         Returns: undefined
@@ -1113,6 +1127,33 @@ export type Database = {
           title: string
         }[]
       }
+      get_recurring_detail: {
+        Args: { p_arrangement_id: string; p_year: number }
+        Returns: Json
+      }
+      get_recurring_home_summary: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      get_recurring_overview: {
+        Args: { p_year?: number }
+        Returns: {
+          arrangement_status: string
+          end_date: string | null
+          frequency: string
+          group_name: string
+          name: string
+          next_due_date: string | null
+          payer_name: string
+          payer_person_id: string
+          recurring_id: string
+          start_date: string
+          timeline: Json
+          total_amount: number
+          user_receives: number
+          user_share: number
+        }[]
+      }
       has_my_identity: { Args: never; Returns: boolean }
       leave_group: { Args: { p_group_id: string }; Returns: undefined }
       record_expense_payment: {
@@ -1128,6 +1169,15 @@ export type Database = {
         Args: { p_amount: number; p_iou_id: string; p_note?: string }
         Returns: string
       }
+      record_recurring_payment: {
+        Args: {
+          p_arrangement_id: string
+          p_from_person_id: string
+          p_note?: string
+          p_period_ids: string[]
+        }
+        Returns: string
+      }
       remove_group_member: {
         Args: { p_group_id: string; p_person_id: string }
         Returns: undefined
@@ -1140,9 +1190,17 @@ export type Database = {
         Args: { p_decision: string; p_payment_id: string }
         Returns: undefined
       }
+      review_recurring_payment: {
+        Args: { p_decision: string; p_payment_id: string }
+        Returns: undefined
+      }
       revoke_group_invite: { Args: { p_invite_id: string }; Returns: undefined }
       transfer_group_ownership: {
         Args: { p_group_id: string; p_new_owner_person_id: string }
+        Returns: undefined
+      }
+      set_recurring_period_skipped: {
+        Args: { p_period_id: string; p_reason?: string; p_skipped: boolean }
         Returns: undefined
       }
       unarchive_group: { Args: { p_group_id: string }; Returns: undefined }
@@ -1162,6 +1220,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_recurring_arrangement: {
+        Args: {
+          p_arrangement_id: string
+          p_due_day: number
+          p_effective_from: string
+          p_end_date: string | null
+          p_name: string
+          p_participants: Json
+          p_status: Database["public"]["Enums"]["recurring_arrangement_status"]
+          p_total_amount: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       group_invite_status: "pending" | "accepted" | "revoked" | "expired"
@@ -1169,6 +1240,10 @@ export type Database = {
       group_membership_status: "active" | "left" | "removed"
       notification_push_mode: "in_app_only" | "all_important" | "payments_only"
       payment_status: "pending" | "confirmed" | "rejected"
+      recurring_arrangement_status: "active" | "paused" | "ended"
+      recurring_frequency: "monthly"
+      recurring_obligation_status: "unpaid" | "pending" | "paid" | "skipped"
+      recurring_period_state: "open" | "skipped"
       split_method: "equal" | "amount" | "items"
     }
     CompositeTypes: {
@@ -1305,6 +1380,10 @@ export const Constants = {
       group_membership_status: ["active", "left", "removed"],
       notification_push_mode: ["in_app_only", "all_important", "payments_only"],
       payment_status: ["pending", "confirmed", "rejected"],
+      recurring_arrangement_status: ["active", "paused", "ended"],
+      recurring_frequency: ["monthly"],
+      recurring_obligation_status: ["unpaid", "pending", "paid", "skipped"],
+      recurring_period_state: ["open", "skipped"],
       split_method: ["equal", "amount", "items"],
     },
   },

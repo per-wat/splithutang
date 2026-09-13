@@ -63,7 +63,7 @@ export function IouCard({
           </p>
 
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {groupName}
+            Group: {groupName}
           </p>
         </div>
 

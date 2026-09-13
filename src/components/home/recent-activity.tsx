@@ -45,7 +45,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                 </p>
 
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {activity.groupName}
+                  Group: {activity.groupName}
                 </p>
               </div>
 

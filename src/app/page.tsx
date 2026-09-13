@@ -13,6 +13,8 @@ import {
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/date-format";
+import { RecurringSummary, type HomeRecurringItem } from "@/components/home/recurring-summary";
+import { recurringStatusCopy, type RecurringTimelineStatus } from "@/lib/recurring";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -29,7 +31,7 @@ export default async function Home() {
    * ------------------------------------------
    */
 
-  const [profileResult, balancesResult, activityResult] = await Promise.all([
+  const [profileResult, balancesResult, activityResult, recurringResult] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -47,6 +49,8 @@ export default async function Home() {
     supabase.rpc("get_recent_activity_with_group", {
       p_limit: 5,
     }),
+
+    supabase.rpc("get_recurring_home_summary", { p_limit: 3 }),
   ]);
 
   const { data: profile, error: profileError } = profileResult;
@@ -172,6 +176,28 @@ export default async function Home() {
     createdAt: activity.created_at,
   }));
 
+  if (recurringResult.error) {
+    console.error("Failed to load recurring summary:", recurringResult.error);
+  }
+
+  const recurringItems: HomeRecurringItem[] = Array.isArray(recurringResult.data)
+    ? recurringResult.data.flatMap((value) => {
+        if (!value || typeof value !== "object" || Array.isArray(value) || typeof value.id !== "string") return [];
+        const status = typeof value.status === "string" && value.status in recurringStatusCopy
+          ? value.status as RecurringTimelineStatus
+          : "upcoming";
+        return [{
+          id: value.id,
+          name: typeof value.name === "string" ? value.name : "Recurring payment",
+          groupName: typeof value.group_name === "string" ? value.group_name : "Group",
+          dueDate: typeof value.due_date === "string" ? value.due_date : new Date().toISOString().slice(0, 10),
+          amount: typeof value.amount === "number" ? value.amount : Number(value.amount) || 0,
+          role: value.role === "receive" ? "receive" as const : "pay" as const,
+          status,
+        }];
+      })
+    : [];
+
   return (
     <>
       <HomeHeader
@@ -186,6 +212,8 @@ export default async function Home() {
       />
 
       <OutstandingList people={outstandingPeople} />
+
+      <RecurringSummary items={recurringItems} />
 
       <RecentActivity activities={recentActivities} />
     </>

@@ -138,6 +138,7 @@ export function BottomNav() {
             const Icon = item.icon;
             const isActive =
               pathname === item.href ||
+              (item.href === "/expenses" && pathname.startsWith("/recurring")) ||
               (item.href === "/people" && pathname.startsWith("/groups"));
 
             return (

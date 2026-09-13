@@ -173,13 +173,15 @@ function buildPushPayload(notification: {
     "group",
     "person",
     "group_invite",
+    "recurring",
   ].includes(notification.resource_type)
     ? (notification.resource_type as
         | "expense"
         | "iou"
         | "group"
         | "person"
-        | "group_invite")
+        | "group_invite"
+        | "recurring")
     : null;
   const path = resourceType
     ? (notificationPath(resourceType, notification.resource_id) ??

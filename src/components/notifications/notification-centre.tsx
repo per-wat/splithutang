@@ -2,6 +2,7 @@
 
 import {
   BellOff,
+  CalendarClock,
   CheckCheck,
   CircleDollarSign,
   FileText,
@@ -33,6 +34,10 @@ function NotificationTypeIcon({ type }: { type: NotificationType }) {
 
   if (type.startsWith("expense_payment") || type.startsWith("iou_payment") || type.endsWith("settled")) {
     return <CircleDollarSign className={className} />;
+  }
+
+  if (type.startsWith("recurring")) {
+    return <CalendarClock className={className} />;
   }
 
   if (type.startsWith("expense")) {
@@ -363,12 +368,20 @@ async function resourceIsAvailable(
     return !error && (status === "pending" || status === "accepted");
   }
 
+  if (resourceType === "recurring") {
+    const { data, error } = await supabase.rpc("get_recurring_detail", {
+      p_arrangement_id: resourceId,
+      p_year: new Date().getFullYear(),
+    });
+    return !error && Boolean(data);
+  }
+
   const tableByType = {
     expense: "expenses",
     iou: "ious",
     group: "groups",
     person: "people",
-  } as const satisfies Record<Exclude<NotificationResourceType, "group_invite">, string>;
+  } as const satisfies Record<Exclude<NotificationResourceType, "group_invite" | "recurring">, string>;
   const table = tableByType[resourceType];
   const { data, error } = await supabase
     .from(table)
