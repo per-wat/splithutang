@@ -26,6 +26,24 @@ const demoSeedMarker = readFileSync(
   "utf8",
 );
 
+const reminderMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260913222657_recurring_due_reminders.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
+const pushDelivery = readFileSync(
+  new URL("../src/lib/notifications/push-delivery.ts", import.meta.url),
+  "utf8",
+);
+
+const pushRoute = readFileSync(
+  new URL("../src/app/api/notifications/push/route.ts", import.meta.url),
+  "utf8",
+);
+
 test("equal monthly split keeps exact cents", () => {
   const shares = splitAmountEqually(54.99, ["a", "b", "c"]);
   assert.deepEqual(shares, { a: 18.33, b: 18.33, c: 18.33 });
@@ -106,4 +124,41 @@ test("visual fixtures are hard-guarded to the SplitHutangDev identities", () => 
   assert.match(demoSeed, /Skipping SplitHutangDev recurring fixtures/i);
   assert.match(demoSeed, /delete from public\.groups where id = v_group/i);
   assert.doesNotMatch(demoSeedMarker, /insert into|update public|delete from/i);
+});
+
+test("recurring reminders run seven days before and on the due date only", () => {
+  assert.match(reminderMigration, /rp\.due_date in \(p_today, p_today \+ 7\)/i);
+  assert.match(reminderMigration, /recurring_payment_due_soon/i);
+  assert.match(reminderMigration, /recurring_payment_due/i);
+  assert.match(reminderMigration, /Payment due in 1 week/i);
+  assert.match(reminderMigration, /Payment due today/i);
+});
+
+test("paid, paid-early, pending, skipped and inactive recurring payments are not reminded", () => {
+  assert.match(reminderMigration, /ro\.payment_status = 'unpaid'/i);
+  assert.match(reminderMigration, /ra\.status = 'active'/i);
+  assert.match(reminderMigration, /rp\.state = 'open'/i);
+  assert.match(reminderMigration, /gm\.membership_status = 'active'/i);
+  assert.match(reminderMigration, /person\.linked_user_id is not null/i);
+  assert.match(reminderMigration, /g\.archived_at is null/i);
+});
+
+test("recurring reminders are idempotent and enter the existing push outbox", () => {
+  assert.match(reminderMigration, /recurring-reminder:%s:%s/i);
+  assert.match(reminderMigration, /candidate\.obligation_id/i);
+  assert.match(reminderMigration, /candidate\.reminder_kind/i);
+  assert.match(reminderMigration, /on conflict \(recipient_user_id, deduplication_key\)/i);
+  assert.match(reminderMigration, /insert into public\.notification_push_outbox/i);
+  assert.match(reminderMigration, /grant execute[\s\S]+to service_role/i);
+  assert.doesNotMatch(reminderMigration, /grant execute[\s\S]+to authenticated/i);
+});
+
+test("the daily push job creates recurring reminders before delivery", () => {
+  const creation = pushRoute.indexOf("createRecurringDueNotifications()");
+  const delivery = pushRoute.indexOf("deliverPendingPushNotifications()");
+  assert.ok(creation >= 0);
+  assert.ok(delivery > creation);
+  assert.match(pushDelivery, /recurring_payment_due_soon/);
+  assert.match(pushDelivery, /notification\.title/);
+  assert.match(pushDelivery, /notification\.body/);
 });

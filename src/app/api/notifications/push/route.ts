@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { deliverPendingPushNotifications } from "@/lib/notifications/push-delivery";
+import {
+  createRecurringDueNotifications,
+  deliverPendingPushNotifications,
+} from "@/lib/notifications/push-delivery";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -29,8 +32,9 @@ export async function GET(request: Request) {
 
 async function runDelivery() {
   try {
+    const recurringRemindersCreated = await createRecurringDueNotifications();
     const summary = await deliverPendingPushNotifications();
-    return NextResponse.json(summary);
+    return NextResponse.json({ recurringRemindersCreated, ...summary });
   } catch (deliveryError) {
     console.error("Push delivery failed:", deliveryError);
     return NextResponse.json({ error: "Push delivery failed" }, { status: 500 });

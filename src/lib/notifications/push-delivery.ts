@@ -21,6 +21,19 @@ type DeliverySummary = {
   deferred: number;
 };
 
+export async function createRecurringDueNotifications() {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.rpc(
+    "create_recurring_due_notifications",
+  );
+
+  if (error) {
+    throw new Error(`Unable to create recurring reminders: ${error.message}`);
+  }
+
+  return data ?? 0;
+}
+
 export async function deliverPendingPushNotifications(): Promise<DeliverySummary> {
   const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY;
   const privateKey = process.env.WEB_PUSH_VAPID_PRIVATE_KEY;
@@ -163,6 +176,8 @@ function buildPushPayload(notification: {
   notification_type: string;
   resource_type: string;
   resource_id: string | null;
+  title: string;
+  body: string;
 }) {
   const isPayment = paymentNotificationTypes.has(
     notification.notification_type as NotificationType,
@@ -187,12 +202,19 @@ function buildPushPayload(notification: {
     ? (notificationPath(resourceType, notification.resource_id) ??
       "/notifications")
     : "/notifications";
+  const isRecurringReminder =
+    notification.notification_type === "recurring_payment_due_soon" ||
+    notification.notification_type === "recurring_payment_due";
 
   return {
-    title: isPayment
+    title: isRecurringReminder
+      ? notification.title
+      : isPayment
       ? "SplitHutang payment update"
       : "New SplitHutang activity",
-    body: isPayment
+    body: isRecurringReminder
+      ? notification.body
+      : isPayment
       ? "A payment or settlement changed. Open SplitHutang for details."
       : "Open SplitHutang to view the update.",
     tag: notification.id,

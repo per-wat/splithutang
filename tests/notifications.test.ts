@@ -39,6 +39,8 @@ test("recurring payments route to their timeline detail", () => {
     "/recurring/67b9a43c-6468-41a5-a8b5-42bced738efd",
   );
   assert.equal(shouldDeliverPush("payments_only", "recurring_payment_confirmed"), true);
+  assert.equal(shouldDeliverPush("payments_only", "recurring_payment_due_soon"), true);
+  assert.equal(shouldDeliverPush("payments_only", "recurring_payment_due"), true);
 });
 
 test("group activity includes active members and excludes former members", () => {

@@ -27,6 +27,8 @@ export const notificationTypes = [
   "recurring_payment_recorded",
   "recurring_payment_confirmed",
   "recurring_payment_rejected",
+  "recurring_payment_due_soon",
+  "recurring_payment_due",
 ] as const;
 
 export type NotificationType = (typeof notificationTypes)[number];
@@ -53,6 +55,10 @@ export type NotificationMetadata = {
   member_name?: string;
   amount?: number;
   payment_status?: string;
+  period_start?: string;
+  due_date?: string;
+  reminder_kind?: "due_soon" | "due";
+  obligation_id?: string;
 };
 
 export type NotificationRow = Omit<
@@ -79,6 +85,8 @@ export const paymentNotificationTypes = new Set<NotificationType>([
   "recurring_payment_recorded",
   "recurring_payment_confirmed",
   "recurring_payment_rejected",
+  "recurring_payment_due_soon",
+  "recurring_payment_due",
 ]);
 
 const uuidPattern =
@@ -147,6 +155,13 @@ function parseMetadata(value: { [key: string]: Json | undefined }): Notification
     member_name: asString(value.member_name),
     amount: typeof value.amount === "number" ? value.amount : undefined,
     payment_status: asString(value.payment_status),
+    period_start: asString(value.period_start),
+    due_date: asString(value.due_date),
+    reminder_kind:
+      value.reminder_kind === "due_soon" || value.reminder_kind === "due"
+        ? value.reminder_kind
+        : undefined,
+    obligation_id: asString(value.obligation_id),
   };
 }
 

@@ -925,6 +925,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_recurring_due_notifications: {
+        Args: { p_today?: string }
+        Returns: number
+      }
       create_local_group_member: {
         Args: { p_avatar_color?: string; p_group_id: string; p_name: string }
         Returns: string
