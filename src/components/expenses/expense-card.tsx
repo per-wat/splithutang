@@ -3,6 +3,7 @@ export type ExpenseStatus = "owed-to-me" | "i-owe" | "settled" | "group";
 type ExpenseCardProps = {
   title: string;
   date: string;
+  groupName: string;
   paidBy: string;
   amount: number;
   status: ExpenseStatus;
@@ -38,6 +39,7 @@ const statusStyles = {
 export function ExpenseCard({
   title,
   date,
+  groupName,
   paidBy,
   amount,
   status,
@@ -53,6 +55,10 @@ export function ExpenseCard({
 
           <p className="mt-1 text-xs text-muted-foreground">
             {date} · Paid by {paidBy}
+          </p>
+
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            Group: {groupName}
           </p>
         </div>
 

@@ -35,7 +35,9 @@ export default async function ExpensesPage() {
     redirect("/login");
   }
 
-  const { data, error } = await supabase.rpc("get_expenses_overview");
+  const { data, error } = await supabase.rpc(
+    "get_expenses_overview_with_group",
+  );
 
   if (error) {
     console.error("Failed to load expenses:", error);
@@ -61,6 +63,7 @@ export default async function ExpensesPage() {
     id: expense.expense_id,
     title: expense.name,
     date: formatDateOnly(expense.expense_date),
+    groupName: expense.group_name,
     paidBy: expense.paid_by_name,
     amount: Number(expense.total_amount),
     status: getExpenseStatus(expense.status),

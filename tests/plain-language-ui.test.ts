@@ -49,3 +49,20 @@ test("new notifications use Hutang and payment confirmation wording", () => {
   assert.match(migration, /marked RM %s as not received/);
   assert.match(migration, /is fully paid/);
 });
+
+test("transaction cards show the group name without extra page queries", () => {
+  const homePage = source("src/app/page.tsx");
+  const expensesPage = source("src/app/expenses/page.tsx");
+  const hutangPage = source("src/app/ious/page.tsx");
+  const expenseCard = source("src/components/expenses/expense-card.tsx");
+  const hutangCard = source("src/components/ious/iou-card.tsx");
+  const recentActivity = source("src/components/home/recent-activity.tsx");
+
+  assert.match(homePage, /get_recent_activity_with_group/);
+  assert.match(expensesPage, /get_expenses_overview_with_group/);
+  assert.match(hutangPage, /get_ious_overview_with_group/);
+
+  for (const card of [expenseCard, hutangCard, recentActivity]) {
+    assert.match(card, /Group: \{.*groupName\}/);
+  }
+});

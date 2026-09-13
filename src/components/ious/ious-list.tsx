@@ -11,6 +11,7 @@ export type IouOverview = {
   id: string;
   title: string;
   date: string;
+  groupName: string;
   from: string;
   to: string;
   amount: number;
@@ -77,6 +78,7 @@ export function IousList({ ious }: IousListProps) {
                 <IouCard
                   title={iou.title}
                   date={iou.date}
+                  groupName={iou.groupName}
                   from={iou.from}
                   to={iou.to}
                   amount={iou.amount}

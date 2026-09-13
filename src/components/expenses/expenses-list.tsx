@@ -12,6 +12,7 @@ export type ExpenseOverview = {
   id: string;
   title: string;
   date: string;
+  groupName: string;
   paidBy: string;
   amount: number;
   status: ExpenseStatus;
@@ -80,6 +81,7 @@ export function ExpensesList({ expenses }: ExpensesListProps) {
                 <ExpenseCard
                   title={expense.title}
                   date={expense.date}
+                  groupName={expense.groupName}
                   paidBy={expense.paidBy}
                   amount={expense.amount}
                   status={expense.status}

@@ -32,7 +32,7 @@ export default async function IousPage() {
     redirect("/login");
   }
 
-  const { data, error } = await supabase.rpc("get_ious_overview");
+  const { data, error } = await supabase.rpc("get_ious_overview_with_group");
 
   if (error) {
     console.error("Failed to load IOUs:", error);
@@ -58,6 +58,7 @@ export default async function IousPage() {
     id: iou.iou_id,
     title: iou.reason,
     date: formatDateOnly(iou.iou_date),
+    groupName: iou.group_name,
     from: iou.from_name,
     to: iou.to_name,
 

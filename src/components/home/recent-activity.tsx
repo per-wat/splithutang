@@ -5,6 +5,7 @@ export type Activity = {
   type: "expense" | "iou";
   title: string;
   date: string;
+  groupName: string;
   amount: number;
   createdAt: string;
 };
@@ -41,6 +42,10 @@ export function RecentActivity({ activities }: RecentActivityProps) {
 
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {activity.date}
+                </p>
+
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  Group: {activity.groupName}
                 </p>
               </div>
 
