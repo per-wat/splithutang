@@ -14,6 +14,11 @@ const migration = readFileSync(
 );
 
 const demoSeed = readFileSync(
+  new URL("../supabase/dev/seed_recurring_demo.sql", import.meta.url),
+  "utf8",
+);
+
+const demoSeedMarker = readFileSync(
   new URL(
     "../supabase/migrations/20260913153529_seed_recurring_demo_dev.sql",
     import.meta.url,
@@ -100,4 +105,5 @@ test("visual fixtures are hard-guarded to the SplitHutangDev identities", () => 
   assert.match(demoSeed, /perf\\\.user\(0\[1-9\]\|10\)/i);
   assert.match(demoSeed, /Skipping SplitHutangDev recurring fixtures/i);
   assert.match(demoSeed, /delete from public\.groups where id = v_group/i);
+  assert.doesNotMatch(demoSeedMarker, /insert into|update public|delete from/i);
 });
