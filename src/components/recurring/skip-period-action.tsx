@@ -27,5 +27,5 @@ export function SkipPeriodAction({ periodId, skipped }: { periodId: string; skip
     router.refresh();
   }
 
-  return <div><button type="button" disabled={saving} onClick={toggle} className="text-xs font-semibold text-muted-foreground underline underline-offset-4 disabled:opacity-50">{saving ? "Saving..." : skipped ? "Restore month" : "Skip this month"}</button>{error && <p className="mt-1 text-xs text-red-400">{error}</p>}</div>;
+  return <div><button type="button" disabled={saving} onClick={toggle} className="text-xs font-semibold text-muted-foreground underline underline-offset-4 disabled:opacity-50">{saving ? "Saving..." : skipped ? "Restore payment for this month" : "No payment this month"}</button>{error && <p className="mt-1 text-xs text-red-400">{error}</p>}</div>;
 }

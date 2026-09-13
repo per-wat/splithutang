@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarPlus, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { RecurringCard } from "@/components/recurring/recurring-card";
@@ -50,18 +50,9 @@ export default async function RecurringPage({ searchParams }: RecurringPageProps
   return (
     <>
       <header className="px-5 pt-8">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[30px] font-bold leading-tight tracking-tight">Recurring</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Monthly payments without the guesswork</p>
-          </div>
-          <Link
-            href="/recurring/new"
-            className="flex size-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-            aria-label="Add recurring payment"
-          >
-            <Plus className="size-5" />
-          </Link>
+        <div>
+          <h1 className="text-[30px] font-bold leading-tight tracking-tight">Recurring Payments</h1>
+          <p className="mt-1 text-sm text-muted-foreground">See what is paid and what still needs payment</p>
         </div>
 
         <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/[0.08] bg-card px-3 py-2">
@@ -82,14 +73,10 @@ export default async function RecurringPage({ searchParams }: RecurringPageProps
           <div className="rounded-2xl border border-white/[0.08] bg-card px-5 py-10 text-center">
             <CalendarPlus className="mx-auto size-8 text-blue-400" />
             <p className="mt-3 font-semibold">No recurring payments yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Add Netflix, rent, internet, or any shared monthly payment.</p>
-            <Link href="/recurring/new" className="mt-5 inline-flex h-11 items-center rounded-2xl bg-blue-600 px-5 text-sm font-semibold text-white">
-              Add recurring payment
-            </Link>
+            <p className="mt-1 text-sm text-muted-foreground">Use the + button below to add Netflix, rent, internet, or another repeating payment.</p>
           </div>
         )}
       </section>
     </>
   );
 }
-

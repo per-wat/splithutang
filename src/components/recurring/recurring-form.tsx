@@ -143,14 +143,14 @@ export function RecurringForm({ groups, existing }: RecurringFormProps) {
           <button type="button" onClick={() => router.back()} aria-label="Go back" className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
             <ArrowLeft className="size-5" />
           </button>
-          <h1 className="text-xl font-bold">{editing ? "Edit Recurring" : "New Recurring Payment"}</h1>
+          <h1 className="text-xl font-bold">{editing ? "Edit Recurring Payment" : "Add Recurring Payment"}</h1>
         </header>
 
         {groups.length === 0 ? (
           <div className="mt-5 rounded-2xl border border-white/[0.08] bg-card p-6 text-center text-sm text-muted-foreground">Create a group before adding a recurring payment.</div>
         ) : (
           <div className="space-y-5 pt-3">
-            <Field label="Name" htmlFor="recurring-name">
+            <Field label="What is this payment for?" htmlFor="recurring-name">
               <input id="recurring-name" value={name} maxLength={100} onChange={(event) => setName(event.target.value)} placeholder="e.g. Netflix Family" className="form-input" />
             </Field>
 
@@ -160,21 +160,21 @@ export function RecurringForm({ groups, existing }: RecurringFormProps) {
               </select>
             </Field>
 
-            <Field label="Who pays the provider?" htmlFor="recurring-payer">
+            <Field label="Who pays the full bill?" htmlFor="recurring-payer">
               <select id="recurring-payer" value={payerId} disabled={editing} onChange={(event) => selectPayer(event.target.value)} className="form-input disabled:opacity-60">
                 {people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
               </select>
             </Field>
 
-            <Field label="Monthly total (RM)" htmlFor="recurring-total">
+            <Field label="Full monthly amount (RM)" htmlFor="recurring-total">
               <input id="recurring-total" type="number" inputMode="decimal" min="0.01" step="0.01" value={total} onChange={(event) => setTotal(event.target.value)} placeholder="0.00" className="form-input" />
             </Field>
 
             <section>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold">Participants and shares</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">The payer is included in the monthly total.</p>
+                  <p className="text-sm font-semibold">Who is included?</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Choose everyone who pays part of this bill. The person paying the full bill is included.</p>
                 </div>
                 <div className="flex rounded-xl bg-white/[0.05] p-1 text-xs">
                   {(["equal", "custom"] as const).map((mode) => (
@@ -183,7 +183,7 @@ export function RecurringForm({ groups, existing }: RecurringFormProps) {
                         setCustomShares(Object.fromEntries(selectedIds.map((id) => [id, (equalShares[id] ?? 0).toFixed(2)])));
                       }
                       setSplitMode(mode);
-                    }} className={`rounded-lg px-3 py-1.5 font-semibold capitalize ${splitMode === mode ? "bg-blue-600 text-white" : "text-muted-foreground"}`}>{mode}</button>
+                    }} className={`rounded-lg px-3 py-1.5 font-semibold ${splitMode === mode ? "bg-blue-600 text-white" : "text-muted-foreground"}`}>{mode === "equal" ? "Equal amounts" : "Custom amounts"}</button>
                   ))}
                 </div>
               </div>
@@ -194,11 +194,11 @@ export function RecurringForm({ groups, existing }: RecurringFormProps) {
                     <div key={person.id} className={`flex items-center gap-3 px-4 py-3 ${index < people.length - 1 ? "border-b border-white/[0.06]" : ""}`}>
                       <button type="button" onClick={() => togglePerson(person.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
                         <span className={`flex size-8 items-center justify-center rounded-full text-xs font-bold text-white ${person.color}`}>{person.name.charAt(0).toUpperCase()}</span>
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{person.name}{person.id === payerId ? " · payer" : ""}</span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{person.name}{person.id === payerId ? " · pays full bill" : ""}</span>
                         <span className={`flex size-6 items-center justify-center rounded-full border ${selected ? "border-blue-500 bg-blue-600 text-white" : "border-white/15 text-transparent"}`}><Check className="size-4" /></span>
                       </button>
                       {selected && (splitMode === "custom" ? (
-                        <input aria-label={`${person.name} share`} type="number" inputMode="decimal" step="0.01" min="0" value={customShares[person.id] ?? ""} onChange={(event) => setCustomShares((current) => ({ ...current, [person.id]: event.target.value }))} className="h-9 w-20 rounded-xl border border-border bg-background px-2 text-right text-sm outline-none focus:border-blue-500" />
+                        <input aria-label={`${person.name} monthly amount`} type="number" inputMode="decimal" step="0.01" min="0" value={customShares[person.id] ?? ""} onChange={(event) => setCustomShares((current) => ({ ...current, [person.id]: event.target.value }))} className="h-9 w-20 rounded-xl border border-border bg-background px-2 text-right text-sm outline-none focus:border-blue-500" />
                       ) : (
                         <span className="w-20 text-right text-sm font-semibold">RM {(equalShares[person.id] ?? 0).toFixed(2)}</span>
                       ))}
@@ -206,21 +206,21 @@ export function RecurringForm({ groups, existing }: RecurringFormProps) {
                   );
                 })}
               </div>
-              {!shareMatches && <p className="mt-2 text-xs text-red-400">Shares total RM {shareTotal.toFixed(2)} and must equal RM {numericTotal.toFixed(2)}.</p>}
+              {!shareMatches && <p className="mt-2 text-xs text-red-400">The individual amounts add up to RM {shareTotal.toFixed(2)}. They must match the full monthly amount of RM {numericTotal.toFixed(2)}.</p>}
             </section>
 
             <div className="grid grid-cols-2 gap-3">
-              {!editing ? <Field label="Start date" htmlFor="recurring-start"><input id="recurring-start" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="form-input" /></Field>
-                : <Field label="Effective from" htmlFor="recurring-effective"><input id="recurring-effective" type="date" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} className="form-input" /><p className="mt-1 text-[11px] text-muted-foreground">Use the first day of a future month.</p></Field>}
-              <Field label="Due day" htmlFor="recurring-due"><input id="recurring-due" type="number" min="1" max="31" value={dueDay} onChange={(event) => setDueDay(event.target.value)} className="form-input" /></Field>
+              {!editing ? <Field label="Starts on" htmlFor="recurring-start"><input id="recurring-start" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="form-input" /></Field>
+                : <Field label="Changes start on" htmlFor="recurring-effective"><input id="recurring-effective" type="date" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} className="form-input" /><p className="mt-1 text-[11px] text-muted-foreground">Choose the first day of a future month.</p></Field>}
+              <Field label="Payment day each month" htmlFor="recurring-due"><input id="recurring-due" type="number" min="1" max="31" value={dueDay} onChange={(event) => setDueDay(event.target.value)} className="form-input" /></Field>
             </div>
 
-            <Field label="End date (optional)" htmlFor="recurring-end"><input id="recurring-end" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} className="form-input" /></Field>
-            {editing && <Field label="Status" htmlFor="recurring-status"><select id="recurring-status" value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="form-input"><option value="active">Active</option><option value="paused">Paused</option><option value="ended">Ended</option></select></Field>}
+            <Field label="Ends on (optional)" htmlFor="recurring-end"><input id="recurring-end" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} className="form-input" /></Field>
+            {editing && <Field label="Current status" htmlFor="recurring-status"><select id="recurring-status" value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="form-input"><option value="active">Active</option><option value="paused">Paused</option><option value="ended">Ended</option></select></Field>}
 
             {error && <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</div>}
-            <button type="button" disabled={!canSave} onClick={save} className="h-12 w-full rounded-2xl bg-blue-600 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{saving ? "Saving..." : editing ? "Save future changes" : "Create recurring payment"}</button>
-            {editing && <p className="text-center text-xs leading-relaxed text-muted-foreground">Paid and pending months stay unchanged. New terms only apply from the effective month.</p>}
+            <button type="button" disabled={!canSave} onClick={save} className="h-12 w-full rounded-2xl bg-blue-600 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">{saving ? "Saving..." : editing ? "Save changes" : "Add recurring payment"}</button>
+            {editing && <p className="text-center text-xs leading-relaxed text-muted-foreground">Months already paid or waiting for confirmation will not change. These changes only apply from the selected month.</p>}
           </div>
         )}
       </div>

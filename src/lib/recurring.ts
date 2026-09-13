@@ -144,7 +144,7 @@ export const recurringStatusCopy: Record<
     className: "border-purple-500/20 bg-purple-500/10 text-purple-300",
   },
   group: {
-    label: "Group view",
+    label: "Other members",
     symbol: "•",
     className: "border-blue-500/20 bg-blue-500/10 text-blue-300",
   },

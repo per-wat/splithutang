@@ -30,7 +30,7 @@ export function RecurringSummary({ items }: { items: HomeRecurringItem[] }) {
             <Link key={item.id} href={`/recurring/${item.id}`} className={`flex items-center gap-3 px-4 py-3.5 ${index < items.length - 1 ? "border-b border-white/[0.06]" : ""}`}>
               <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400"><CalendarClock className="size-4" /></div>
               <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{item.name}</p><p className="mt-0.5 truncate text-xs text-muted-foreground">{item.groupName} · {formatDateOnly(item.dueDate)}</p></div>
-              <div className="text-right"><p className="text-sm font-bold">RM {item.amount.toFixed(2)}</p><p className={`mt-0.5 text-[10px] font-semibold ${item.status === "due" ? "text-red-300" : item.status === "pending" ? "text-amber-300" : "text-muted-foreground"}`}>{item.role === "receive" ? "To receive" : copy.label}</p></div>
+              <div className="text-right"><p className="text-sm font-bold">RM {item.amount.toFixed(2)}</p><p className={`mt-0.5 text-[10px] font-semibold ${item.status === "due" ? "text-red-300" : item.status === "pending" ? "text-amber-300" : "text-muted-foreground"}`}>{item.role === "receive" ? "You will receive" : item.status === "due" ? "You need to pay" : copy.label}</p></div>
             </Link>
           );
         })}
@@ -38,4 +38,3 @@ export function RecurringSummary({ items }: { items: HomeRecurringItem[] }) {
     </section>
   );
 }
-

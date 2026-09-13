@@ -28,10 +28,9 @@ export function RecurringObligationAction(props: Props) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white">
-        {props.mode === "mark-paid" ? "Pay months" : "Record received"}
+        {props.mode === "mark-paid" ? "I’ve paid" : "Mark as received"}
       </button>
       {open && <RecurringPaymentForm arrangementId={props.arrangementId} fromPersonId={props.personId} personName={props.personName} periods={payable} requiresConfirmation={props.requiresConfirmation} payerName={props.payerName} mode={props.mode} onClose={() => setOpen(false)} />}
     </>
   );
 }
-

@@ -66,7 +66,7 @@ export default async function RecurringDetailPage({ params, searchParams }: Prop
       <div className="mx-auto w-full max-w-md px-4 pb-10">
         <header className="sticky top-0 z-20 -mx-4 flex items-center gap-3 bg-background px-4 pb-3 pt-6">
           <Link href="/recurring" aria-label="Back to recurring" className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"><ArrowLeft className="size-5" /></Link>
-          <h1 className="min-w-0 flex-1 truncate text-xl font-bold">Recurring Details</h1>
+          <h1 className="min-w-0 flex-1 truncate text-xl font-bold">Recurring Payment</h1>
           {detail.canEdit && <Link href={`/recurring/${detail.id}/edit`} aria-label="Edit recurring payment" className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"><Pencil className="size-4" /></Link>}
         </header>
 
@@ -80,11 +80,11 @@ export default async function RecurringDetailPage({ params, searchParams }: Prop
               </div>
               <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <Info label="Monthly total" value={`RM ${detail.currentVersion.totalAmount.toFixed(2)}`} />
-                <Info label="Paid by" value={detail.payerName} />
-                <Info label="Due" value={`Day ${detail.currentVersion.dueDay}`} />
-                <Info label="Frequency" value="Monthly" />
-                <Info label="Started" value={formatDateOnly(detail.startDate)} />
-                <Info label="Ends" value={detail.endDate ? formatDateOnly(detail.endDate) : "No end date"} />
+                <Info label="Bill paid by" value={detail.payerName} />
+                <Info label="Payment day" value={`Day ${detail.currentVersion.dueDay} each month`} />
+                <Info label="Repeats" value="Every month" />
+                <Info label="Started on" value={formatDateOnly(detail.startDate)} />
+                <Info label="Ends on" value={detail.endDate ? formatDateOnly(detail.endDate) : "No end date"} />
               </div>
             </div>
           </div>
@@ -101,15 +101,15 @@ export default async function RecurringDetailPage({ params, searchParams }: Prop
 
         <section className="mt-4">
           <div className="mb-3 flex items-end justify-between gap-3">
-            <div><h2 className="font-bold">{monthLabels[month - 1]} {year}</h2><p className="mt-0.5 text-xs text-muted-foreground">{selectedPeriod ? `Due ${formatDateOnly(selectedPeriod.dueDate)}` : "Not active for this month"}</p></div>
+            <div><h2 className="font-bold">{monthLabels[month - 1]} {year}</h2><p className="mt-0.5 text-xs text-muted-foreground">{selectedPeriod ? `Payment due ${formatDateOnly(selectedPeriod.dueDate)}` : "No payment for this month"}</p></div>
             <span className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${selectedCopy.className}`}>{selectedCopy.symbol} {selectedCopy.label}</span>
           </div>
 
           {selectedPeriod ? (
             <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-card">
               <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-                <div><p className="text-sm font-medium">{detail.payerName}</p><p className="text-xs text-muted-foreground">Owner / payer · RM {Math.max(selectedPeriod.totalAmount - selectedPeriod.obligations.reduce((sum, obligation) => sum + obligation.shareAmount, 0), 0).toFixed(2)}</p></div>
-                <span className="text-xs font-semibold text-blue-300">Payer</span>
+                <div><p className="text-sm font-medium">{detail.payerName}</p><p className="text-xs text-muted-foreground">{detail.payerName === "You" ? "Your" : "Their"} monthly amount: RM {Math.max(selectedPeriod.totalAmount - selectedPeriod.obligations.reduce((sum, obligation) => sum + obligation.shareAmount, 0), 0).toFixed(2)}</p></div>
+                <span className="text-xs font-semibold text-blue-300">Pays the full bill</span>
               </div>
               {visibleObligations.map((obligation) => {
                 const status = obligation.paymentStatus === "paid"
@@ -128,7 +128,7 @@ export default async function RecurringDetailPage({ params, searchParams }: Prop
                 return (
                   <div key={obligation.id} className="border-b border-white/[0.06] px-4 py-3 last:border-b-0">
                     <div className="flex items-center gap-3">
-                      <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{obligation.name}</p><p className="mt-0.5 text-xs text-muted-foreground">RM {obligation.shareAmount.toFixed(2)}</p></div>
+                      <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{obligation.name}</p><p className="mt-0.5 text-xs text-muted-foreground">{obligation.name === "You" ? "Your" : "Their"} monthly amount: RM {obligation.shareAmount.toFixed(2)}</p></div>
                       <span className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${copy.className}`}>{copy.symbol} {copy.label}</span>
                     </div>
                     <div className="mt-2 flex justify-end">
@@ -140,9 +140,9 @@ export default async function RecurringDetailPage({ params, searchParams }: Prop
                   </div>
                 );
               })}
-              {!detail.isPayer && visibleObligations.length === 0 && <p className="px-4 py-5 text-sm text-muted-foreground">You do not have a share for this month.</p>}
+              {!detail.isPayer && visibleObligations.length === 0 && <p className="px-4 py-5 text-sm text-muted-foreground">You do not need to pay for this month.</p>}
             </div>
-          ) : <div className="rounded-2xl border border-white/[0.08] bg-card px-4 py-8 text-center text-sm text-muted-foreground">This recurring payment was not active yet, or had already ended.</div>}
+          ) : <div className="rounded-2xl border border-white/[0.08] bg-card px-4 py-8 text-center text-sm text-muted-foreground">This payment had not started yet or had already ended.</div>}
           {selectedPeriod && (detail.isPayer || detail.canEdit) && <div className="mt-3 text-right"><SkipPeriodAction periodId={selectedPeriod.id} skipped={selectedPeriod.state === "skipped"} /></div>}
         </section>
       </div>

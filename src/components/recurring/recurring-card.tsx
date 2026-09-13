@@ -11,10 +11,10 @@ export function RecurringCard({ item, year }: { item: RecurringOverview; year: n
   const currentStatus = item.timeline.find((month) => month.month === currentMonth)?.status ?? "not_applicable";
   const statusCopy = recurringStatusCopy[currentStatus];
   const amountLabel = item.userReceives > 0
-    ? `You receive RM ${item.userReceives.toFixed(2)}`
+    ? `You will receive RM ${item.userReceives.toFixed(2)}`
     : item.userShare > 0
-      ? `Your share RM ${item.userShare.toFixed(2)}`
-      : `Total RM ${item.totalAmount.toFixed(2)}`;
+      ? `You need to pay RM ${item.userShare.toFixed(2)}`
+      : `Monthly total RM ${item.totalAmount.toFixed(2)}`;
 
   return (
     <article className="rounded-2xl border border-white/[0.08] bg-card p-4">
@@ -28,7 +28,7 @@ export function RecurringCard({ item, year }: { item: RecurringOverview; year: n
               <div className="min-w-0">
                 <h2 className="truncate font-bold">{item.name}</h2>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {item.groupName} · Paid by {item.payerName}
+                  Group: {item.groupName} · Bill paid by {item.payerName}
                 </p>
               </div>
               <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-semibold ${statusCopy.className}`}>
@@ -37,7 +37,7 @@ export function RecurringCard({ item, year }: { item: RecurringOverview; year: n
             </div>
             <p className="mt-2 text-sm font-semibold">{amountLabel}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Monthly{item.nextDueDate ? ` · Next ${formatDateOnly(item.nextDueDate)}` : ""}
+              Every month{item.nextDueDate ? ` · Next payment ${formatDateOnly(item.nextDueDate)}` : ""}
             </p>
           </div>
         </div>

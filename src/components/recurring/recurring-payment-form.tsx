@@ -72,8 +72,8 @@ export function RecurringPaymentForm({
       <div className="relative z-10 max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t border-white/[0.08] bg-background px-5 pb-8 pt-5 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold">{mode === "mark-paid" ? "Pay multiple months" : `Payment from ${personName}`}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Choose the exact months this payment covers.</p>
+            <h2 className="text-lg font-bold">{mode === "mark-paid" ? "Record payment for several months" : `Record payment from ${personName}`}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Select every month covered by this payment.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="flex size-9 items-center justify-center rounded-full bg-white/[0.06] text-muted-foreground"><X className="size-4" /></button>
         </div>
@@ -93,9 +93,9 @@ export function RecurringPaymentForm({
         </div>
 
         <div className="mt-4 rounded-2xl bg-blue-500/[0.08] px-4 py-3">
-          <div className="flex items-center justify-between gap-3"><span className="text-sm text-blue-200">{selected.length} month{selected.length === 1 ? "" : "s"}</span><span className="font-bold text-blue-200">RM {total.toFixed(2)}</span></div>
+          <div className="flex items-center justify-between gap-3"><span className="text-sm text-blue-200">{selected.length} month{selected.length === 1 ? "" : "s"} selected</span><span className="font-bold text-blue-200">RM {total.toFixed(2)}</span></div>
         </div>
-        {requiresConfirmation && <p className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">{payerName} must confirm receiving this payment before the months become paid.</p>}
+        {requiresConfirmation && <p className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">This only records the payment in SplitHutang. {payerName} must confirm they received it before these months are marked as paid.</p>}
         <label htmlFor="recurring-payment-note" className="mt-4 block text-sm font-semibold">Note <span className="font-normal text-muted-foreground">(optional)</span></label>
         <input id="recurring-payment-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="e.g. DuitNow transfer" className="form-input mt-2" />
         {error && <p className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</p>}
@@ -104,4 +104,3 @@ export function RecurringPaymentForm({
     </div>
   );
 }
-
