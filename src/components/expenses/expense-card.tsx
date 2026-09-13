@@ -58,7 +58,7 @@ export function ExpenseCard({
           </p>
 
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            Group: {groupName}
+            {groupName}
           </p>
         </div>
 
@@ -73,10 +73,8 @@ export function ExpenseCard({
         {unpaidCount !== undefined && unpaidCount > 0 && (
           <span className="text-xs text-muted-foreground">
             {unpaidCount}{" "}
-            {unpaidCount === 1
-              ? "person still needs"
-              : "people still need"}{" "}
-            to pay
+            {unpaidCount === 1 ? "person still needs" : "people still need"} to
+            pay
           </span>
         )}
       </div>
