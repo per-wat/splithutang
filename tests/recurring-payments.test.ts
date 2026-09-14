@@ -34,6 +34,14 @@ const reminderMigration = readFileSync(
   "utf8",
 );
 
+const enumCastFixMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260914131111_fix_recurring_payment_enum_casts.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
+
 const pushDelivery = readFileSync(
   new URL("../src/lib/notifications/push-delivery.ts", import.meta.url),
   "utf8",
@@ -98,6 +106,25 @@ test("payment submission and review preserve receiver confirmation rules", () =>
   assert.match(migration, /when v_self_person_id = v_payer_person_id or v_allow_self_confirm/i);
   assert.match(migration, /Only the payment receiver can review this payment/i);
   assert.match(migration, /payment_status = case when v_decision = 'confirmed' then 'paid' else 'unpaid' end/i);
+});
+
+test("recurring enum updates cast every CASE branch to its destination type", () => {
+  assert.match(
+    enumCastFixMigration,
+    /then 'paid'::public\.recurring_obligation_status\s+else 'pending'::public\.recurring_obligation_status/i,
+  );
+  assert.match(
+    enumCastFixMigration,
+    /then 'paid'::public\.recurring_obligation_status\s+else 'unpaid'::public\.recurring_obligation_status/i,
+  );
+  assert.match(
+    enumCastFixMigration,
+    /then 'skipped'::public\.recurring_period_state\s+else 'open'::public\.recurring_period_state/i,
+  );
+  assert.match(
+    enumCastFixMigration,
+    /then 'skipped'::public\.recurring_obligation_status\s+else 'unpaid'::public\.recurring_obligation_status/i,
+  );
 });
 
 test("recurring tables are RLS protected and writes are RPC-only", () => {
