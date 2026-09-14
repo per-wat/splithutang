@@ -21,6 +21,14 @@ export const notificationTypes = [
   "group_member_added",
   "group_member_joined",
   "group_member_left",
+  "recurring_created",
+  "recurring_updated",
+  "recurring_payment_submitted",
+  "recurring_payment_recorded",
+  "recurring_payment_confirmed",
+  "recurring_payment_rejected",
+  "recurring_payment_due_soon",
+  "recurring_payment_due",
 ] as const;
 
 export type NotificationType = (typeof notificationTypes)[number];
@@ -29,7 +37,8 @@ export type NotificationResourceType =
   | "iou"
   | "group"
   | "person"
-  | "group_invite";
+  | "group_invite"
+  | "recurring";
 export type PushMode =
   | "in_app_only"
   | "all_important"
@@ -42,9 +51,14 @@ export type NotificationMetadata = {
   group_name?: string;
   expense_name?: string;
   iou_reason?: string;
+  recurring_name?: string;
   member_name?: string;
   amount?: number;
   payment_status?: string;
+  period_start?: string;
+  due_date?: string;
+  reminder_kind?: "due_soon" | "due";
+  obligation_id?: string;
 };
 
 export type NotificationRow = Omit<
@@ -67,6 +81,12 @@ export const paymentNotificationTypes = new Set<NotificationType>([
   "iou_payment_confirmed",
   "iou_payment_rejected",
   "iou_settled",
+  "recurring_payment_submitted",
+  "recurring_payment_recorded",
+  "recurring_payment_confirmed",
+  "recurring_payment_rejected",
+  "recurring_payment_due_soon",
+  "recurring_payment_due",
 ]);
 
 const uuidPattern =
@@ -81,7 +101,7 @@ export function parseNotificationRow(
 ): NotificationRow | null {
   if (
     !isNotificationType(row.notification_type) ||
-    !["expense", "iou", "group", "person", "group_invite"].includes(
+    !["expense", "iou", "group", "person", "group_invite", "recurring"].includes(
       row.resource_type,
     )
   ) {
@@ -112,6 +132,7 @@ export function notificationPath(
     group: "/groups/",
     person: "/people/",
     group_invite: "/invite/",
+    recurring: "/recurring/",
   };
 
   return `${routes[resourceType]}${resourceId}`;
@@ -130,9 +151,17 @@ function parseMetadata(value: { [key: string]: Json | undefined }): Notification
     group_name: asString(value.group_name),
     expense_name: asString(value.expense_name),
     iou_reason: asString(value.iou_reason),
+    recurring_name: asString(value.recurring_name),
     member_name: asString(value.member_name),
     amount: typeof value.amount === "number" ? value.amount : undefined,
     payment_status: asString(value.payment_status),
+    period_start: asString(value.period_start),
+    due_date: asString(value.due_date),
+    reminder_kind:
+      value.reminder_kind === "due_soon" || value.reminder_kind === "due"
+        ? value.reminder_kind
+        : undefined,
+    obligation_id: asString(value.obligation_id),
   };
 }
 

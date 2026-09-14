@@ -3,6 +3,7 @@
 import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  CalendarClock,
   FileText,
   Home,
   LoaderCircle,
@@ -129,6 +130,26 @@ export function BottomNav() {
               </p>
             </div>
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              closeMenu();
+              router.push("/recurring/new");
+            }}
+            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 text-left text-zinc-900 shadow-xl transition-transform active:scale-[0.98]"
+          >
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50">
+              <CalendarClock className="size-6 text-emerald-600" />
+            </div>
+
+            <div>
+              <p className="font-semibold">Add Recurring Payment</p>
+              <p className="mt-0.5 text-xs text-zinc-400">
+                Track a shared bill that repeats
+              </p>
+            </div>
+          </button>
         </div>
       )}
 
@@ -138,6 +159,7 @@ export function BottomNav() {
             const Icon = item.icon;
             const isActive =
               pathname === item.href ||
+              (item.href === "/expenses" && pathname.startsWith("/recurring")) ||
               (item.href === "/people" && pathname.startsWith("/groups"));
 
             return (

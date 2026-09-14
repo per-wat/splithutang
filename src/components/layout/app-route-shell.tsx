@@ -12,6 +12,7 @@ const APP_SHELL_ROUTES = new Set([
   "/notifications",
   "/people",
   "/profile",
+  "/recurring",
 ]);
 
 export function AppRouteShell({ children }: { children: React.ReactNode }) {

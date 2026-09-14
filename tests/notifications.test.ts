@@ -33,6 +33,16 @@ test("IOU counterparty rule notifies only the other linked party", () => {
   assert.deepEqual(resolveRecipientUserIds(["debtor", "creditor"], "debtor"), ["creditor"]);
 });
 
+test("recurring payments route to their timeline detail", () => {
+  assert.equal(
+    notificationPath("recurring", "67b9a43c-6468-41a5-a8b5-42bced738efd"),
+    "/recurring/67b9a43c-6468-41a5-a8b5-42bced738efd",
+  );
+  assert.equal(shouldDeliverPush("payments_only", "recurring_payment_confirmed"), true);
+  assert.equal(shouldDeliverPush("payments_only", "recurring_payment_due_soon"), true);
+  assert.equal(shouldDeliverPush("payments_only", "recurring_payment_due"), true);
+});
+
 test("group activity includes active members and excludes former members", () => {
   assert.deepEqual(
     resolveActiveGroupRecipientUserIds(
