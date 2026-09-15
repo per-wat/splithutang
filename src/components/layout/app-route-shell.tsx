@@ -8,6 +8,7 @@ const APP_SHELL_ROUTES = new Set([
   "/",
   "/expenses",
   "/groups",
+  "/getting-started",
   "/ious",
   "/notifications",
   "/people",

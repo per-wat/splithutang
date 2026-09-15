@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly } from "@/lib/date-format";
 import { RecurringSummary, type HomeRecurringItem } from "@/components/home/recurring-summary";
 import { recurringStatusCopy, type RecurringTimelineStatus } from "@/lib/recurring";
+import { GettingStartedCard } from "@/components/onboarding/getting-started-card";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -205,6 +206,8 @@ export default async function Home() {
         avatarColor={avatarColor}
         avatarUrl={avatarUrl}
       />
+
+      <GettingStartedCard />
 
       <BalanceSummary
         owedToYou={owedToYou}
