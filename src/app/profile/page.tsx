@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { ProfileSettingsForm } from "@/components/profile/profile-settings-form";
 import { NotificationSettings } from "@/components/profile/notification-settings";
+import { RestartGettingStarted } from "@/components/profile/restart-getting-started";
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -91,6 +92,8 @@ export default async function ProfilePage() {
         />
 
         <NotificationSettings userId={user.id} />
+
+        <RestartGettingStarted userId={user.id} />
       </div>
     </>
   );

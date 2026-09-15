@@ -52,9 +52,11 @@ export function getCombinedOnboardingProgress(input: {
 }
 
 export function getHomeOnboardingSection(input: {
+  dismissed?: boolean;
   setupComplete: boolean;
   learning: LearningProgressSignals;
 }): "setup" | "learning" | null {
+  if (input.dismissed) return null;
   if (!input.setupComplete) return "setup";
   if (!getLearningProgress(input.learning).complete) return "learning";
 

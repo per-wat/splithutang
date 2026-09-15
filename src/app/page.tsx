@@ -46,7 +46,8 @@ export default async function Home() {
         `
         display_name,
         avatar_color,
-        avatar_path
+        avatar_path,
+        onboarding_dismissed_at
       `,
       )
       .eq("id", user.id)
@@ -222,7 +223,10 @@ export default async function Home() {
         avatarUrl={avatarUrl}
       />
 
-      <GettingStartedCard learningProgress={learningProgress} />
+      <GettingStartedCard
+        dismissed={Boolean(profile?.onboarding_dismissed_at)}
+        learningProgress={learningProgress}
+      />
 
       <BalanceSummary
         owedToYou={owedToYou}

@@ -9,8 +9,10 @@ import {
   LockKeyhole,
   Share2,
   Smartphone,
+  X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { useSetupStatus } from "@/components/onboarding/use-setup-status";
 import { HowSplitHutangWorks } from "@/components/onboarding/how-splithutang-works";
@@ -28,6 +30,7 @@ export function GettingStartedExperience({
   initialPushMode: PushMode | null;
   learningProgress: LearningProgressSignals;
 }) {
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const { pwa, push, installState, notificationState, progress } =
     useSetupStatus();
@@ -35,6 +38,31 @@ export function GettingStartedExperience({
   const [message, setMessage] = useState("");
   const [preferenceError, setPreferenceError] = useState("");
   const [installing, setInstalling] = useState(false);
+  const [dismissing, setDismissing] = useState(false);
+
+  async function dismissGettingStarted() {
+    if (dismissing) return;
+
+    setDismissing(true);
+    setPreferenceError("");
+    setMessage("");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ onboarding_dismissed_at: new Date().toISOString() })
+      .eq("id", userId)
+      .select("onboarding_dismissed_at")
+      .single();
+
+    if (error) {
+      setPreferenceError("Unable to dismiss Getting Started. Please try again.");
+      setDismissing(false);
+      return;
+    }
+
+    router.replace("/");
+    router.refresh();
+  }
 
   async function installApp() {
     if (!pwa.installPromptAvailable || installing) return;
@@ -132,6 +160,19 @@ export function GettingStartedExperience({
             }}
           />
         </div>
+
+        <button
+          type="button"
+          onClick={() => void dismissGettingStarted()}
+          disabled={dismissing}
+          className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-medium text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground disabled:opacity-50"
+        >
+          <X className="size-4" />
+          {dismissing ? "Dismissing..." : "Dismiss Getting Started"}
+        </button>
+        <p className="mt-2 text-center text-[11px] leading-relaxed text-muted-foreground">
+          You can restart it anytime from Profile & Settings.
+        </p>
       </section>
 
       <div className="mt-4 space-y-4">

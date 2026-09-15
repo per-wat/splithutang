@@ -19,8 +19,10 @@ import {
 } from "@/lib/onboarding/learning";
 
 export function GettingStartedCard({
+  dismissed,
   learningProgress,
 }: {
+  dismissed: boolean;
   learningProgress: LearningProgressSignals;
 }) {
   const { installState, notificationState, progress } = useSetupStatus();
@@ -30,6 +32,7 @@ export function GettingStartedCard({
   }
 
   const section = getHomeOnboardingSection({
+    dismissed,
     setupComplete: progress.complete,
     learning: learningProgress,
   });

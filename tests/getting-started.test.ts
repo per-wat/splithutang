@@ -232,6 +232,14 @@ test("setup and learning progress advance together without keeping a completed H
   };
 
   assert.equal(
+    getHomeOnboardingSection({
+      dismissed: true,
+      setupComplete: false,
+      learning: emptyLearningProgress,
+    }),
+    null,
+  );
+  assert.equal(
     getHomeOnboardingSection({ setupComplete: false, learning }),
     "setup",
   );
@@ -254,6 +262,43 @@ test("setup and learning progress advance together without keeping a completed H
     }),
     null,
   );
+});
+
+test("dismiss and restart are account-scoped UI preferences", async () => {
+  const [migration, home, experience, restart, profile] = await Promise.all([
+    readFile(
+      "supabase/migrations/20260915042603_add_onboarding_dismissal.sql",
+      "utf8",
+    ),
+    readFile("src/app/page.tsx", "utf8"),
+    readFile(
+      "src/components/onboarding/getting-started-experience.tsx",
+      "utf8",
+    ),
+    readFile(
+      "src/components/profile/restart-getting-started.tsx",
+      "utf8",
+    ),
+    readFile("src/app/profile/page.tsx", "utf8"),
+  ]);
+
+  assert.match(migration, /alter table public\.profiles/);
+  assert.match(migration, /onboarding_dismissed_at timestamptz/);
+  assert.match(home, /onboarding_dismissed_at/);
+  assert.match(home, /dismissed=\{Boolean\(profile\?\.onboarding_dismissed_at\)\}/);
+
+  assert.match(experience, /Dismiss Getting Started/);
+  assert.match(experience, /onboarding_dismissed_at: new Date\(\)\.toISOString\(\)/);
+  assert.match(experience, /\.eq\("id", userId\)/);
+
+  assert.match(restart, /Restart Getting Started/);
+  assert.match(restart, /onboarding_dismissed_at: null/);
+  assert.match(restart, /\.eq\("id", userId\)/);
+  assert.match(profile, /<RestartGettingStarted userId=\{user\.id\} \/>/);
+
+  for (const component of [experience, restart]) {
+    assert.doesNotMatch(component, /has_group|has_shared_expense|has_payment/);
+  }
 });
 
 test("learning progress is derived per authenticated user from real activity", async () => {
