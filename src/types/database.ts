@@ -818,6 +818,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          onboarding_dismissed_at: string | null
           updated_at: string
         }
         Insert: {
@@ -826,6 +827,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id: string
+          onboarding_dismissed_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -834,6 +836,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          onboarding_dismissed_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1021,6 +1024,14 @@ export type Database = {
           is_owner: boolean
           member_count: number
           name: string
+        }[]
+      }
+      get_onboarding_progress: {
+        Args: never
+        Returns: {
+          has_group: boolean
+          has_payment: boolean
+          has_shared_expense: boolean
         }[]
       }
       get_ious_overview: {

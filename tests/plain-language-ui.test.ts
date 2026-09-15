@@ -95,3 +95,19 @@ test("transaction cards show the group name without extra page queries", () => {
     assert.doesNotMatch(card, /Group: \{.*groupName\}/);
   }
 });
+
+test("beginner empty states explain each area and offer the next action", () => {
+  const expenses = source("src/components/expenses/expenses-list.tsx");
+  const hutang = source("src/components/ious/ious-list.tsx");
+  const people = source("src/components/people/people-list.tsx");
+  const groups = source("src/app/groups/page.tsx");
+
+  assert.match(expenses, /No shared expenses yet/);
+  assert.match(expenses, /Add expense/);
+  assert.match(hutang, /No Hutang yet/);
+  assert.match(hutang, /Add Hutang/);
+  assert.match(people, /No people yet/);
+  assert.match(people, /Create Group/);
+  assert.match(groups, /Groups keep shared expenses between the right people/);
+  assert.match(groups, /invitation link/);
+});

@@ -65,8 +65,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <PwaManager />
-        <AppRouteShell>{children}</AppRouteShell>
+        <PwaManager>
+          <AppRouteShell>{children}</AppRouteShell>
+        </PwaManager>
         <SpeedInsights />
       </body>
     </html>

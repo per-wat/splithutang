@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight, ListChecks } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { ProfileSettingsForm } from "@/components/profile/profile-settings-form";
 import { NotificationSettings } from "@/components/profile/notification-settings";
+import { RestartGettingStarted } from "@/components/profile/restart-getting-started";
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -65,6 +66,22 @@ export default async function ProfilePage() {
       </header>
 
       <div className="px-5 pb-8 pt-4">
+        <Link
+          href="/getting-started"
+          className="mb-6 flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-card p-4 transition-colors hover:bg-white/[0.04]"
+        >
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600/10 text-blue-400">
+            <ListChecks className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold">Getting Started</h2>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Device setup, groups, expenses, payments, and quick help
+            </p>
+          </div>
+          <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+        </Link>
+
         <ProfileSettingsForm
           userId={user.id}
           email={user.email ?? ""}
@@ -75,6 +92,8 @@ export default async function ProfilePage() {
         />
 
         <NotificationSettings userId={user.id} />
+
+        <RestartGettingStarted userId={user.id} />
       </div>
     </>
   );

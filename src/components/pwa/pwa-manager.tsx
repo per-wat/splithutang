@@ -1,7 +1,22 @@
 "use client";
 
 import { Download, RefreshCw, Share2, WifiOff, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  detectDevicePlatform,
+  isIosSafariBrowser,
+  isStandaloneApp,
+  type DevicePlatform,
+} from "@/lib/onboarding/setup";
 
 type InstallChoice = {
   outcome: "accepted" | "dismissed";
@@ -13,25 +28,29 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+type PwaContextValue = {
+  standalone: boolean | null;
+  platform: DevicePlatform | null;
+  isIosSafari: boolean | null;
+  installPromptAvailable: boolean;
+  installApp: () => Promise<InstallChoice["outcome"] | "unavailable">;
+};
+
+const PwaContext = createContext<PwaContextValue | null>(null);
+
 const INSTALL_DISMISSED_AT = "splithutang:pwa-install-dismissed-at";
 const INSTALL_DISMISS_DURATION = 14 * 24 * 60 * 60 * 1000;
 
-function isStandalone() {
+function readStandaloneState() {
   const navigatorWithStandalone = navigator as Navigator & {
     standalone?: boolean;
   };
 
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    navigatorWithStandalone.standalone === true
-  );
-}
-
-function isIosDevice() {
-  return (
-    /iPad|iPhone|iPod/i.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  );
+  return isStandaloneApp({
+    displayModeStandalone: window.matchMedia("(display-mode: standalone)")
+      .matches,
+    navigatorStandalone: navigatorWithStandalone.standalone,
+  });
 }
 
 function wasInstallRecentlyDismissed() {
@@ -53,29 +72,56 @@ function rememberInstallDismissal() {
   }
 }
 
-export function PwaManager() {
+export function PwaManager({ children }: { children: React.ReactNode }) {
   const [online, setOnline] = useState(true);
   const [installEvent, setInstallEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [showIosInstructions, setShowIosInstructions] = useState(false);
+  const [standalone, setStandalone] = useState<boolean | null>(null);
+  const [platform, setPlatform] = useState<DevicePlatform | null>(null);
+  const [isIosSafari, setIsIosSafari] = useState<boolean | null>(null);
+  const [showInstallSuggestion, setShowInstallSuggestion] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
   const reloadingForUpdate = useRef(false);
 
   useEffect(() => {
-    queueMicrotask(() => setOnline(navigator.onLine));
+    const displayMode = window.matchMedia("(display-mode: standalone)");
+    const currentPlatform = detectDevicePlatform({
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      maxTouchPoints: navigator.maxTouchPoints,
+    });
+    const updateStandalone = () => setStandalone(readStandaloneState());
+
+    queueMicrotask(() => {
+      setOnline(navigator.onLine);
+      setPlatform(currentPlatform);
+      setIsIosSafari(
+        currentPlatform === "ios" && isIosSafariBrowser(navigator.userAgent),
+      );
+      updateStandalone();
+    });
 
     const handleOnline = () => setOnline(true);
     const handleOffline = () => setOnline(false);
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();
 
-      if (!isStandalone() && !wasInstallRecentlyDismissed()) {
-        setInstallEvent(event as BeforeInstallPromptEvent);
+      // Keep the browser event even when the suggestion was dismissed. The
+      // Getting Started screen can then reuse it without adding a second
+      // beforeinstallprompt listener.
+      setInstallEvent(event as BeforeInstallPromptEvent);
+
+      if (!readStandaloneState() && !wasInstallRecentlyDismissed()) {
+        setShowInstallSuggestion(true);
       }
     };
     const handleInstalled = () => {
       setInstallEvent(null);
-      setShowIosInstructions(false);
+      setShowInstallSuggestion(false);
+      // Installation can finish while this browser tab is still open. Only
+      // the standalone display state completes onboarding; the user still
+      // needs to launch the new Home Screen icon.
+      updateStandalone();
     };
     const handleControllerChange = () => {
       if (reloadingForUpdate.current) {
@@ -87,13 +133,14 @@ export function PwaManager() {
     window.addEventListener("offline", handleOffline);
     window.addEventListener("beforeinstallprompt", handleInstallPrompt);
     window.addEventListener("appinstalled", handleInstalled);
+    displayMode.addEventListener("change", updateStandalone);
 
     if (
-      isIosDevice() &&
-      !isStandalone() &&
+      currentPlatform === "ios" &&
+      !readStandaloneState() &&
       !wasInstallRecentlyDismissed()
     ) {
-      queueMicrotask(() => setShowIosInstructions(true));
+      queueMicrotask(() => setShowInstallSuggestion(true));
     }
 
     if ("serviceWorker" in navigator) {
@@ -141,6 +188,7 @@ export function PwaManager() {
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
       window.removeEventListener("appinstalled", handleInstalled);
+      displayMode.removeEventListener("change", updateStandalone);
 
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.removeEventListener(
@@ -151,25 +199,34 @@ export function PwaManager() {
     };
   }, []);
 
-  async function installApp() {
+  const installApp = useCallback(async () => {
     if (!installEvent) {
-      return;
+      return "unavailable" as const;
     }
 
-    await installEvent.prompt();
-    const choice = await installEvent.userChoice;
+    try {
+      await installEvent.prompt();
+      const choice = await installEvent.userChoice;
 
-    setInstallEvent(null);
+      setInstallEvent(null);
+      setShowInstallSuggestion(false);
 
-    if (choice.outcome === "dismissed") {
-      rememberInstallDismissal();
+      if (choice.outcome === "dismissed") {
+        rememberInstallDismissal();
+      }
+
+      return choice.outcome;
+    } catch (installError) {
+      console.error("Unable to open the SplitHutang installer:", installError);
+      setInstallEvent(null);
+      setShowInstallSuggestion(false);
+      return "unavailable" as const;
     }
-  }
+  }, [installEvent]);
 
   function dismissInstall() {
     rememberInstallDismissal();
-    setInstallEvent(null);
-    setShowIosInstructions(false);
+    setShowInstallSuggestion(false);
   }
 
   async function applyUpdate() {
@@ -189,8 +246,21 @@ export function PwaManager() {
     registration.waiting.postMessage({ type: "SKIP_WAITING" });
   }
 
+  const contextValue = useMemo<PwaContextValue>(
+    () => ({
+      standalone,
+      platform,
+      isIosSafari,
+      installPromptAvailable: Boolean(installEvent),
+      installApp,
+    }),
+    [installApp, installEvent, isIosSafari, platform, standalone],
+  );
+
   return (
-    <>
+    <PwaContext.Provider value={contextValue}>
+      {children}
+
       {!online && (
         <div
           role="status"
@@ -232,7 +302,7 @@ export function PwaManager() {
         </div>
       )}
 
-      {!updateReady && (installEvent || showIosInstructions) && (
+      {!updateReady && showInstallSuggestion && (installEvent || platform === "ios") && (
         <div
           role="dialog"
           aria-label="Install SplitHutang"
@@ -242,7 +312,7 @@ export function PwaManager() {
           }}
         >
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-600/15 text-blue-400">
-            {showIosInstructions ? (
+            {platform === "ios" ? (
               <Share2 className="size-5" />
             ) : (
               <Download className="size-5" />
@@ -251,7 +321,7 @@ export function PwaManager() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">Install SplitHutang</p>
             <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-              {showIosInstructions
+              {platform === "ios"
                 ? "Tap Share, then Add to Home Screen to use it like an app and enable push notifications."
                 : "Add it to this device for faster, app-like access."}
             </p>
@@ -275,6 +345,16 @@ export function PwaManager() {
           </button>
         </div>
       )}
-    </>
+    </PwaContext.Provider>
   );
+}
+
+export function usePwa() {
+  const context = useContext(PwaContext);
+
+  if (!context) {
+    throw new Error("usePwa must be used inside PwaManager");
+  }
+
+  return context;
 }

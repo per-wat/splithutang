@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { HandCoins } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { IouFilters, type IouFilter } from "./iou-filters";
@@ -98,10 +99,29 @@ export function IousList({ ious }: IousListProps) {
               </button>
             )}
           </>
+        ) : ious.length === 0 ? (
+          <div className="rounded-2xl border border-white/[0.08] bg-card px-4 py-10 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-blue-600/10">
+              <HandCoins className="size-5 text-blue-400" />
+            </div>
+
+            <p className="mt-4 font-semibold">No Hutang yet</p>
+
+            <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Use Hutang when one person needs to pay another, without splitting
+              a shared expense.
+            </p>
+
+            <Link
+              href="/add-iou"
+              className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white"
+            >
+              Add Hutang
+            </Link>
+          </div>
         ) : (
           <div className="rounded-2xl border border-white/[0.08] bg-card px-4 py-10 text-center">
             <p className="font-medium">No Hutang found</p>
-
             <p className="mt-1 text-sm text-muted-foreground">
               No Hutang matches this filter.
             </p>

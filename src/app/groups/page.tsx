@@ -72,8 +72,9 @@ export default async function GroupsPage() {
 
               <p className="mt-4 font-semibold">No active groups</p>
 
-              <p className="mt-1 text-sm text-muted-foreground">
-                Create a group to start splitting expenses.
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Groups keep shared expenses between the right people. Create
+                one, or join when a friend sends you an invitation link.
               </p>
 
               <Link
