@@ -45,16 +45,17 @@ export function PeopleList({ people }: PeopleListProps) {
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           Your People
         </h2>
-        {filteredPeople.length === 0 ? (
+        {people.length === 0 ? (
           <div className="rounded-2xl border border-white/[0.08] bg-card p-6 text-center">
             <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-blue-600/10">
               <UsersRound className="size-5 text-blue-400" />
             </div>
 
-            <p className="mt-4 font-semibold">No new friends</p>
+            <p className="mt-4 font-semibold">No people yet</p>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create a group first to add new friends and start splitting.
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Create a group to keep the right friends and shared expenses
+              together.
             </p>
 
             <Link
@@ -63,6 +64,13 @@ export function PeopleList({ people }: PeopleListProps) {
             >
               Create Group
             </Link>
+          </div>
+        ) : filteredPeople.length === 0 ? (
+          <div className="rounded-2xl border border-white/[0.08] bg-card p-6 text-center">
+            <p className="font-semibold">No people found</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try searching for another name.
+            </p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-card">

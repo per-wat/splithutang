@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
@@ -165,6 +166,13 @@ export function IouForm({ groups }: IouFormProps) {
           <p className="mt-1 text-sm text-muted-foreground">
             Create a group before adding Hutang.
           </p>
+
+          <Link
+            href="/groups/new"
+            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white"
+          >
+            Create Group
+          </Link>
         </div>
       ) : (
         <>

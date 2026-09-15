@@ -13,15 +13,20 @@ import {
 import { useMemo, useState } from "react";
 
 import { useSetupStatus } from "@/components/onboarding/use-setup-status";
+import { HowSplitHutangWorks } from "@/components/onboarding/how-splithutang-works";
+import { LearningBasics } from "@/components/onboarding/learning-basics";
 import type { PushMode } from "@/lib/notifications/types";
+import type { LearningProgressSignals } from "@/lib/onboarding/learning";
 import { createClient } from "@/lib/supabase/client";
 
 export function GettingStartedExperience({
   userId,
   initialPushMode,
+  learningProgress,
 }: {
   userId: string;
   initialPushMode: PushMode | null;
+  learningProgress: LearningProgressSignals;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const { pwa, push, installState, notificationState, progress } =
@@ -248,6 +253,9 @@ export function GettingStartedExperience({
           {message}
         </p>
       )}
+
+      <LearningBasics signals={learningProgress} />
+      <HowSplitHutangWorks />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useMemo, useState } from "react";
 import { ArrowLeft, Plus, ScanLine } from "lucide-react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
@@ -572,6 +573,13 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
           <p className="mt-1 text-sm text-muted-foreground">
             Create a group before adding an expense.
           </p>
+
+          <Link
+            href="/groups/new"
+            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white"
+          >
+            Create Group
+          </Link>
         </div>
       ) : (
         <>

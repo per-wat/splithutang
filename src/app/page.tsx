@@ -16,6 +16,7 @@ import { formatDateOnly } from "@/lib/date-format";
 import { RecurringSummary, type HomeRecurringItem } from "@/components/home/recurring-summary";
 import { recurringStatusCopy, type RecurringTimelineStatus } from "@/lib/recurring";
 import { GettingStartedCard } from "@/components/onboarding/getting-started-card";
+import { parseLearningProgress } from "@/lib/onboarding/learning";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -32,7 +33,13 @@ export default async function Home() {
    * ------------------------------------------
    */
 
-  const [profileResult, balancesResult, activityResult, recurringResult] = await Promise.all([
+  const [
+    profileResult,
+    balancesResult,
+    activityResult,
+    recurringResult,
+    onboardingResult,
+  ] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -52,6 +59,8 @@ export default async function Home() {
     }),
 
     supabase.rpc("get_recurring_home_summary", { p_limit: 3 }),
+
+    supabase.rpc("get_onboarding_progress"),
   ]);
 
   const { data: profile, error: profileError } = profileResult;
@@ -199,6 +208,12 @@ export default async function Home() {
       })
     : [];
 
+  if (onboardingResult.error) {
+    console.error("Failed to load onboarding progress:", onboardingResult.error);
+  }
+
+  const learningProgress = parseLearningProgress(onboardingResult.data?.[0]);
+
   return (
     <>
       <HomeHeader
@@ -207,7 +222,7 @@ export default async function Home() {
         avatarUrl={avatarUrl}
       />
 
-      <GettingStartedCard />
+      <GettingStartedCard learningProgress={learningProgress} />
 
       <BalanceSummary
         owedToYou={owedToYou}

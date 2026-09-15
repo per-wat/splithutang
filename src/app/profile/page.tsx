@@ -75,7 +75,7 @@ export default async function ProfilePage() {
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold">Getting Started</h2>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              Home Screen installation and notification setup
+              Device setup, groups, expenses, payments, and quick help
             </p>
           </div>
           <ChevronRight className="size-5 shrink-0 text-muted-foreground" />

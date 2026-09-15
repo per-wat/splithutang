@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Receipt } from "lucide-react";
 
 import { useMemo, useState } from "react";
 
@@ -100,10 +101,29 @@ export function ExpensesList({ expenses }: ExpensesListProps) {
               </button>
             )}
           </>
+        ) : expenses.length === 0 ? (
+          <div className="rounded-2xl border border-white/[0.08] bg-card px-4 py-10 text-center">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-blue-600/10">
+              <Receipt className="size-5 text-blue-400" />
+            </div>
+
+            <p className="mt-4 font-semibold">No shared expenses yet</p>
+
+            <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Paid for something for your friends? Add it here and SplitHutang
+              will calculate who needs to pay you back.
+            </p>
+
+            <Link
+              href="/add-expense"
+              className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white"
+            >
+              Add expense
+            </Link>
+          </div>
         ) : (
           <div className="rounded-2xl border border-white/[0.08] bg-card px-4 py-10 text-center">
             <p className="font-medium">No expenses found</p>
-
             <p className="mt-1 text-sm text-muted-foreground">
               No expenses match this filter.
             </p>

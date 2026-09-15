@@ -1023,6 +1023,14 @@ export type Database = {
           name: string
         }[]
       }
+      get_onboarding_progress: {
+        Args: never
+        Returns: {
+          has_group: boolean
+          has_payment: boolean
+          has_shared_expense: boolean
+        }[]
+      }
       get_ious_overview: {
         Args: never
         Returns: {

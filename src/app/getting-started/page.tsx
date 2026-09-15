@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { GettingStartedExperience } from "@/components/onboarding/getting-started-experience";
+import { parseLearningProgress } from "@/lib/onboarding/learning";
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,15 +15,26 @@ export default async function GettingStartedPage() {
     redirect("/login");
   }
 
-  const { data: preference, error } = await supabase
-    .from("notification_preferences")
-    .select("push_mode")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const [preferenceResult, learningResult] = await Promise.all([
+    supabase
+      .from("notification_preferences")
+      .select("push_mode")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase.rpc("get_onboarding_progress"),
+  ]);
+
+  const { data: preference, error } = preferenceResult;
 
   if (error) {
     console.error("Unable to load notification preference:", error);
   }
+
+  if (learningResult.error) {
+    console.error("Unable to load onboarding progress:", learningResult.error);
+  }
+
+  const learningProgress = parseLearningProgress(learningResult.data?.[0]);
 
   return (
     <>
@@ -38,7 +50,7 @@ export default async function GettingStartedPage() {
         <div>
           <h1 className="text-xl font-bold">Getting Started</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Set up this device for SplitHutang
+            Set up this device and learn the basics
           </p>
         </div>
       </header>
@@ -46,6 +58,7 @@ export default async function GettingStartedPage() {
       <GettingStartedExperience
         userId={user.id}
         initialPushMode={preference?.push_mode ?? null}
+        learningProgress={learningProgress}
       />
     </>
   );
