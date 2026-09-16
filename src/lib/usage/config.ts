@@ -34,6 +34,12 @@ export type UsageMetric = UsageMetricConfig & {
   capped: boolean | null;
 };
 
+export type ProjectUsageSnapshot = {
+  databaseSizeBytes?: unknown;
+  storageSizeBytes?: unknown;
+  monthlyActiveUsers?: unknown;
+};
+
 export const SUPABASE_USAGE_METRICS: UsageMetricConfig[] = [
   {
     key: "EGRESS",
@@ -62,15 +68,17 @@ export const SUPABASE_USAGE_METRICS: UsageMetricConfig[] = [
   {
     key: "STORAGE_SIZE",
     label: "File storage",
-    shortDescription: "Total size of files in Supabase Storage buckets.",
+    shortDescription:
+      "Files stored by this project; the quota applies across the organization.",
     unit: "gigabytes",
     freeLimit: 1,
     group: "capacity",
   },
   {
     key: "MONTHLY_ACTIVE_USERS",
-    label: "Monthly active users",
-    shortDescription: "Distinct users who signed in or refreshed a session.",
+    label: "Monthly active users (estimate)",
+    shortDescription:
+      "Distinct active sessions created or refreshed this calendar month.",
     unit: "count",
     freeLimit: 50_000,
     group: "activity",
@@ -140,4 +148,31 @@ export function buildUsageMetrics(
       capped: typeof raw?.capped === "boolean" ? raw.capped : null,
     };
   });
+}
+
+export function buildProjectUsageMetrics(
+  snapshot: ProjectUsageSnapshot,
+): UsageMetric[] {
+  const bytesPerGigabyte = 1_000_000_000;
+  const databaseSizeBytes = finiteNumber(snapshot.databaseSizeBytes);
+  const storageSizeBytes = finiteNumber(snapshot.storageSizeBytes);
+
+  return buildUsageMetrics([
+    {
+      metric: "DATABASE_SIZE",
+      usage:
+        databaseSizeBytes === null
+          ? null
+          : databaseSizeBytes / bytesPerGigabyte,
+    },
+    {
+      metric: "STORAGE_SIZE",
+      usage:
+        storageSizeBytes === null ? null : storageSizeBytes / bytesPerGigabyte,
+    },
+    {
+      metric: "MONTHLY_ACTIVE_USERS",
+      usage: snapshot.monthlyActiveUsers,
+    },
+  ]);
 }

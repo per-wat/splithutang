@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { buildUsageMetrics } from "../src/lib/usage/config.ts";
+import {
+  buildProjectUsageMetrics,
+  buildUsageMetrics,
+} from "../src/lib/usage/config.ts";
 
 test("usage owner identity remains in server-only configuration", async () => {
   const access = await readFile("src/lib/usage/access.ts", "utf8");
@@ -50,6 +53,32 @@ test("usage metrics prefer live Supabase values while retaining Free-plan fallba
   assert.equal(storage?.limit, 1);
 });
 
+test("supported project usage values are converted into dashboard metrics", () => {
+  const metrics = buildProjectUsageMetrics({
+    databaseSizeBytes: 250_000_000,
+    storageSizeBytes: "500000000",
+    monthlyActiveUsers: 125,
+  });
+
+  assert.equal(
+    metrics.find((metric) => metric.key === "DATABASE_SIZE")?.current,
+    0.25,
+  );
+  assert.equal(
+    metrics.find((metric) => metric.key === "STORAGE_SIZE")?.current,
+    0.5,
+  );
+  assert.equal(
+    metrics.find((metric) => metric.key === "MONTHLY_ACTIVE_USERS")
+      ?.current,
+    125,
+  );
+  assert.equal(
+    metrics.find((metric) => metric.key === "EGRESS")?.current,
+    null,
+  );
+});
+
 test("usage route and sidebar both enforce the owner-only contract", async () => {
   const [page, accessRoute, menu, shell, serverUsage] = await Promise.all([
     readFile("src/app/usage/page.tsx", "utf8"),
@@ -72,4 +101,22 @@ test("usage route and sidebar both enforce the owner-only contract", async () =>
   assert.match(serverUsage, /import "server-only"/);
   assert.match(serverUsage, /Authorization: `Bearer \$\{accessToken\}`/);
   assert.match(serverUsage, /cache: "no-store"/);
+});
+
+test("usage configuration uses supported project-scoped Management APIs", async () => {
+  const [environment, readme, serverUsage] = await Promise.all([
+    readFile(".env.example", "utf8"),
+    readFile("README.md", "utf8"),
+    readFile("src/lib/usage/supabase-usage.ts", "utf8"),
+  ]);
+
+  assert.doesNotMatch(environment, /SUPABASE_ORGANIZATION_SLUG/);
+  assert.doesNotMatch(serverUsage, /process\.env\.SUPABASE_ORGANIZATION_SLUG/);
+  assert.match(serverUsage, /`\/v1\/projects\/\$\{encodeURIComponent\(projectRef\)\}`/);
+  assert.match(serverUsage, /project\.organization_slug/);
+  assert.match(serverUsage, /database\/query\/read-only/);
+  assert.doesNotMatch(serverUsage, /platform\/organizations.*usage/);
+  assert.match(serverUsage, /Database → Read/);
+  assert.match(readme, /Project Settings → Read/);
+  assert.match(readme, /Database → Read/);
 });

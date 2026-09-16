@@ -16,23 +16,29 @@ Fill in the Supabase values printed by `npx supabase status`. Never expose `SUPA
 
 ### Owner usage page
 
-The owner-only `/usage` page reads current billing-cycle metrics from Supabase's
-platform usage endpoint. Set these server-only values locally and in Vercel:
+The owner-only `/usage` page reads supported live project metrics from Supabase's
+Management API and shows the current Free-plan quotas. Set these server-only
+values locally and in Vercel:
 
 - `SUPABASE_ACCESS_TOKEN`: a Supabase Personal Access Token created under
-  **Account → Access Tokens**. Do not prefix it with `NEXT_PUBLIC_`.
-- `SUPABASE_ORGANIZATION_SLUG`: the organization slug shown in the Supabase
-  dashboard URL.
-- `SUPABASE_PROJECT_REF`: the project's 20-character reference. This is optional
-  when `NEXT_PUBLIC_SUPABASE_URL` uses the standard `<ref>.supabase.co` hostname.
+  **Account → Access Tokens**. Scoped tokens need **Project Settings → Read**
+  and **Database → Read** for this project. Do not prefix it with
+  `NEXT_PUBLIC_`.
+- `SUPABASE_PROJECT_REF`: the project's 20-character reference. The app uses it
+  to look up the organization automatically. It can also be derived from a
+  standard `<ref>.supabase.co` `NEXT_PUBLIC_SUPABASE_URL`.
 - `USAGE_OWNER_USER_ID`: the Supabase Auth UUID allowed to open `/usage`. Keep
   this server-only and do not prefix it with `NEXT_PUBLIC_`.
 
 The app compares the verified signed-in user against `USAGE_OWNER_USER_ID` on the
 server before requesting or rendering usage data. The client receives only an
 access boolean. Other users do not see the sidebar entry and receive a 404 from
-the route. If the platform usage request fails, the page shows the known
-Free-plan quotas and links to Supabase's detailed usage dashboard.
+the route. `SUPABASE_ORGANIZATION_SLUG` is not required. Database size, current
+Storage object size, and current-month active users are loaded through the
+documented read-only SQL Management API. Supabase does not expose organization
+billing totals such as egress, Edge Function invocations, and Realtime messages
+through its public PAT-authenticated API, so those cards show their quotas and
+link to Supabase's detailed usage dashboard for the live values.
 
 Run verification with:
 
