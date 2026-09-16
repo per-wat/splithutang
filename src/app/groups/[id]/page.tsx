@@ -62,6 +62,7 @@ export default async function GroupDetailPage({
         name,
         owner_id,
         allow_debtor_self_confirm,
+        allow_all_members_view_transactions,
         archived_at
       `,
     )
@@ -427,6 +428,25 @@ export default async function GroupDetailPage({
           </p>
         </section>
 
+        {/* Transaction visibility setting */}
+        <section className="mt-4 rounded-2xl border border-white/[0.08] bg-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Transaction Visibility
+          </p>
+
+          <p className="mt-2 text-sm font-semibold">
+            {group.allow_all_members_view_transactions
+              ? "Visible to all active members"
+              : "Visible only to involved people"}
+          </p>
+
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {group.allow_all_members_view_transactions
+              ? "Members can view all past and future group transactions, including existing history."
+              : "The owner, creator, payer and transaction participants can view each transaction."}
+          </p>
+        </section>
+
         {/* Active Members */}
         <section className="mt-7">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -500,6 +520,9 @@ export default async function GroupDetailPage({
                 groupId={group.id}
                 initialName={group.name}
                 initialAllowDebtorSelfConfirm={group.allow_debtor_self_confirm}
+                initialAllowAllMembersViewTransactions={
+                  group.allow_all_members_view_transactions
+                }
               />
             </div>
           </section>
