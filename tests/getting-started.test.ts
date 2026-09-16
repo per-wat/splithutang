@@ -265,7 +265,7 @@ test("setup and learning progress advance together without keeping a completed H
 });
 
 test("dismiss and restart are account-scoped UI preferences", async () => {
-  const [migration, home, experience, restart, profile] = await Promise.all([
+  const [migration, home, experience, restart, page] = await Promise.all([
     readFile(
       "supabase/migrations/20260915042603_add_onboarding_dismissal.sql",
       "utf8",
@@ -276,10 +276,10 @@ test("dismiss and restart are account-scoped UI preferences", async () => {
       "utf8",
     ),
     readFile(
-      "src/components/profile/restart-getting-started.tsx",
+      "src/components/onboarding/restart-getting-started.tsx",
       "utf8",
     ),
-    readFile("src/app/profile/page.tsx", "utf8"),
+    readFile("src/app/getting-started/page.tsx", "utf8"),
   ]);
 
   assert.match(migration, /alter table public\.profiles/);
@@ -294,7 +294,7 @@ test("dismiss and restart are account-scoped UI preferences", async () => {
   assert.match(restart, /Restart Getting Started/);
   assert.match(restart, /onboarding_dismissed_at: null/);
   assert.match(restart, /\.eq\("id", userId\)/);
-  assert.match(profile, /<RestartGettingStarted userId=\{user\.id\} \/>/);
+  assert.match(page, /<RestartGettingStarted userId=\{user\.id\} \/>/);
 
   for (const component of [experience, restart]) {
     assert.doesNotMatch(component, /has_group|has_shared_expense|has_payment/);
@@ -332,14 +332,14 @@ test("Home loads learning progress once inside its existing parallel request", a
 });
 
 test("permanent help remains accessible and examples never write financial data", async () => {
-  const [profile, page, learning, help] = await Promise.all([
-    readFile("src/app/profile/page.tsx", "utf8"),
+  const [menu, page, learning, help] = await Promise.all([
+    readFile("src/components/layout/app-menu.tsx", "utf8"),
     readFile("src/app/getting-started/page.tsx", "utf8"),
     readFile("src/components/onboarding/learning-basics.tsx", "utf8"),
     readFile("src/components/onboarding/how-splithutang-works.tsx", "utf8"),
   ]);
 
-  assert.match(profile, /href="\/getting-started"/);
+  assert.match(menu, /href: "\/getting-started"/);
   assert.match(page, /GettingStartedExperience/);
   assert.match(learning, /You&apos;re ready to use SplitHutang/);
   assert.match(help, /How SplitHutang works/);

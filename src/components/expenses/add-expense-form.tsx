@@ -2,7 +2,7 @@
 import { createClient } from "@/lib/supabase/client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, ScanLine } from "lucide-react";
+import { Plus, ScanLine } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,7 @@ import {
   parseReceiptReviewMoney,
   type ReceiptReviewDraft,
 } from "@/lib/receipts/build-receipt-review-draft";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 const ReceiptImportDialog = dynamic(
   () =>
@@ -515,7 +516,7 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
       return;
     }
 
-    router.push("/expenses");
+    router.replace("/expenses");
     router.refresh();
   }
 
@@ -553,14 +554,7 @@ export function AddExpenseForm({ groups }: AddExpenseFormProps) {
       {/* Header */}
       <header className="sticky top-0 z-20 -mx-4 bg-background px-4 pb-3 pt-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            aria-label="Go back"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </button>
+          <AppBackButton fallbackHref="/expenses" label="Go back" />
 
           <h1 className="text-xl font-bold">Add Expense</h1>
         </div>

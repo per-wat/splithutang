@@ -13,7 +13,8 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+
+import { useHistoryOverlay } from "@/hooks/use-history-overlay";
 
 const navItems = [
   {
@@ -71,16 +72,17 @@ function NavItemContent({
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const {
+    open: isMenuOpen,
+    openOverlay,
+    dismiss: closeMenu,
+    closeForNavigation,
+  } = useHistoryOverlay("add-menu");
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
-
-  const handleAddIou = () => {
-    closeMenu();
-    router.push("/add-iou");
-  };
+  function openAddRoute(href: string) {
+    closeForNavigation();
+    router.replace(href);
+  }
 
   return (
     <>
@@ -97,8 +99,7 @@ export function BottomNav() {
           <button
             type="button"
             onClick={() => {
-              closeMenu();
-              router.push("/add-expense");
+              openAddRoute("/add-expense");
             }}
             className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 text-left text-zinc-900 shadow-xl transition-transform active:scale-[0.98]"
           >
@@ -116,7 +117,7 @@ export function BottomNav() {
 
           <button
             type="button"
-            onClick={handleAddIou}
+            onClick={() => openAddRoute("/add-iou")}
             className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 text-left text-zinc-900 shadow-xl transition-transform active:scale-[0.98]"
           >
             <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-purple-50">
@@ -134,8 +135,7 @@ export function BottomNav() {
           <button
             type="button"
             onClick={() => {
-              closeMenu();
-              router.push("/recurring/new");
+              openAddRoute("/recurring/new");
             }}
             className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 text-left text-zinc-900 shadow-xl transition-transform active:scale-[0.98]"
           >
@@ -184,7 +184,7 @@ export function BottomNav() {
           <button
             type="button"
             aria-label={isMenuOpen ? "Close add menu" : "Add"}
-            onClick={() => setIsMenuOpen((open) => !open)}
+            onClick={isMenuOpen ? closeMenu : openOverlay}
             className={`relative -mt-8 flex size-14 items-center justify-center rounded-full text-white shadow-lg transition-all active:scale-95 ${
               isMenuOpen
                 ? "bg-white text-zinc-700 shadow-black/20"

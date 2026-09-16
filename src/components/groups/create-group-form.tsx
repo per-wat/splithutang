@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 export type GroupPersonOption = {
   id: string;
@@ -71,7 +71,7 @@ export function CreateGroupForm({ people }: CreateGroupFormProps) {
       return;
     }
 
-    router.push(`/groups/${groupId}`);
+    router.replace(`/groups/${groupId}`);
 
     router.refresh();
   }
@@ -81,13 +81,7 @@ export function CreateGroupForm({ people }: CreateGroupFormProps) {
       <div className="mx-auto w-full max-w-md px-4 pb-10">
         {/* Header */}
         <header className="sticky top-0 z-20 -mx-4 flex items-center gap-3 bg-background px-4 pb-3 pt-6">
-          <Link
-            href="/groups"
-            aria-label="Back to groups"
-            className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </Link>
+          <AppBackButton fallbackHref="/groups" label="Back to groups" />
 
           <h1 className="text-xl font-bold">New Group</h1>
         </header>

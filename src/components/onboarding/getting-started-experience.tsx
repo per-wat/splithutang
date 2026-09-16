@@ -106,7 +106,7 @@ export function GettingStartedExperience({
 
       if (error) {
         setPreferenceError(
-          "Notifications are on, but the alert preference could not be saved. Review it in Profile & Settings.",
+          "Notifications are on, but the alert preference could not be saved. Review it in Settings.",
         );
       } else {
         setPushMode("all_important");
@@ -171,7 +171,7 @@ export function GettingStartedExperience({
           {dismissing ? "Dismissing..." : "Dismiss Getting Started"}
         </button>
         <p className="mt-2 text-center text-[11px] leading-relaxed text-muted-foreground">
-          You can restart it anytime from Profile & Settings.
+          You can restart it anytime from this page.
         </p>
       </section>
 

@@ -1,3 +1,5 @@
+import { AppMenu } from "@/components/layout/app-menu";
+
 export function IousHeader() {
   return (
     <header className="px-5 pt-8">
@@ -11,6 +13,8 @@ export function IousHeader() {
             Keep track of money to pay and receive
           </p>
         </div>
+
+        <AppMenu />
       </div>
     </header>
   );
