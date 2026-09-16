@@ -1,20 +1,38 @@
 import "server-only";
 
 import {
+  buildProjectUsageMetrics,
   buildUsageMetrics,
-  type RawSupabaseUsageMetric,
   type UsageMetric,
 } from "@/lib/usage/config";
 
 const SUPABASE_MANAGEMENT_API_URL = "https://api.supabase.com";
 
-type SupabaseUsageApiResponse = {
-  usages?: RawSupabaseUsageMetric[];
-};
-
 type SupabaseProjectApiResponse = {
   organization_slug?: unknown;
 };
+
+type SupabaseProjectUsageRow = {
+  database_size_bytes?: unknown;
+  storage_size_bytes?: unknown;
+  monthly_active_users?: unknown;
+};
+
+const PROJECT_USAGE_QUERY = `
+select
+  pg_database_size(current_database())::bigint as database_size_bytes,
+  coalesce((
+    select sum(coalesce(nullif(o.metadata ->> 'size', '')::bigint, 0))
+    from storage.objects as o
+    where o.is_delete_marker is not true
+  ), 0)::bigint as storage_size_bytes,
+  (
+    select count(distinct s.user_id)
+    from auth.sessions as s
+    where coalesce(s.refreshed_at at time zone 'UTC', s.created_at)
+      >= date_trunc('month', now())
+  )::bigint as monthly_active_users
+`;
 
 export type SupabaseUsageResult = {
   status: "ready" | "not_configured" | "error";
@@ -97,16 +115,16 @@ function projectLookupError(status: number) {
   return `Supabase project lookup failed (HTTP ${status}).`;
 }
 
-function usageRequestError(status: number) {
+function usageQueryError(status: number) {
   if (status === 401) {
-    return "Supabase rejected SUPABASE_ACCESS_TOKEN. Replace it with a valid Personal Access Token.";
+    return "Supabase accepted the project token but rejected the live database check. Generate a new Personal Access Token and redeploy.";
   }
 
   if (status === 403) {
-    return "Supabase denied billing usage access. Grant Usage Analytics → Read to the scoped token; if it is already granted, use a classic Personal Access Token for this dashboard endpoint.";
+    return "The scoped Supabase token needs Database → Read to load live database, Storage, and active-user values.";
   }
 
-  return `Supabase billing usage request failed (HTTP ${status}).`;
+  return `Supabase live project usage check failed (HTTP ${status}).`;
 }
 
 export async function getSupabaseUsage(): Promise<SupabaseUsageResult> {
@@ -178,35 +196,42 @@ export async function getSupabaseUsage(): Promise<SupabaseUsageResult> {
     dashboardUrl = usageDashboardUrl(orgSlug, projectRef);
 
     const usageUrl = new URL(
-      `/platform/organizations/${encodeURIComponent(orgSlug)}/usage`,
+      `/v1/projects/${encodeURIComponent(projectRef)}/database/query/read-only`,
       SUPABASE_MANAGEMENT_API_URL,
     );
-    usageUrl.searchParams.set("project_ref", projectRef);
 
     const usageResponse = await fetch(usageUrl, {
-      headers,
+      method: "POST",
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: PROJECT_USAGE_QUERY }),
       cache: "no-store",
     });
 
     if (!usageResponse.ok) {
-      console.error("Supabase usage request failed:", usageResponse.status);
+      console.error("Supabase live usage query failed:", usageResponse.status);
 
       return failedUsageResult({
-        message: usageRequestError(usageResponse.status),
+        message: usageQueryError(usageResponse.status),
         projectRef,
         dashboardUrl,
         refreshedAt,
       });
     }
 
-    const payload = (await usageResponse.json()) as SupabaseUsageApiResponse;
+    const payload = (await usageResponse.json()) as unknown;
+    const usageRow = Array.isArray(payload)
+      ? (payload[0] as SupabaseProjectUsageRow | undefined)
+      : undefined;
 
-    if (!Array.isArray(payload.usages)) {
-      console.error("Supabase usage response did not include a usages array.");
+    if (!usageRow || typeof usageRow !== "object") {
+      console.error("Supabase live usage query returned an unexpected response.");
 
       return failedUsageResult({
         message:
-          "Supabase returned an unexpected usage response. Open the dashboard for exact values.",
+          "Supabase returned an unexpected response for the live project checks. Open the dashboard for exact billing values.",
         projectRef,
         dashboardUrl,
         refreshedAt,
@@ -215,11 +240,16 @@ export async function getSupabaseUsage(): Promise<SupabaseUsageResult> {
 
     return {
       status: "ready",
-      metrics: buildUsageMetrics(payload.usages),
+      metrics: buildProjectUsageMetrics({
+        databaseSizeBytes: usageRow.database_size_bytes,
+        storageSizeBytes: usageRow.storage_size_bytes,
+        monthlyActiveUsers: usageRow.monthly_active_users,
+      }),
       projectRef,
       dashboardUrl,
       refreshedAt,
-      message: null,
+      message:
+        "Database size, file storage, and this month's active users are live. Supabase exposes egress, Edge Function, and Realtime billing totals only in its Dashboard.",
     };
   } catch (error) {
     console.error("Unable to reach the Supabase usage service:", error);

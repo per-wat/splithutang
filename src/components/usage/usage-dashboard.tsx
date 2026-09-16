@@ -42,7 +42,7 @@ function formatMetricValue(value: number, unit: UsageMetric["unit"]) {
 function metricStatus(metric: UsageMetric) {
   if (metric.ratio === null) {
     return {
-      label: "Waiting for data",
+      label: "Dashboard only",
       badge: "bg-zinc-500/10 text-zinc-400",
       bar: "bg-zinc-600",
     };
@@ -142,7 +142,7 @@ function UsageCard({ metric }: { metric: UsageMetric }) {
       <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
         <span>
           {metric.ratio === null
-            ? "Live value unavailable"
+            ? "Open Supabase for live value"
             : `${Math.round(metric.ratio * 100)}% used`}
         </span>
         <span className="text-right">
@@ -206,7 +206,7 @@ export function UsageDashboard({ usage }: { usage: SupabaseUsageResult }) {
                   : `${warningCount} limit${warningCount === 1 ? "" : "s"} need attention`}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Current billing-cycle usage for this Supabase project.
+              Supported live project checks plus current Free-plan quotas.
             </p>
           </div>
           <RefreshUsageButton />
@@ -234,6 +234,17 @@ export function UsageDashboard({ usage }: { usage: SupabaseUsageResult }) {
           </p>
           <p className="mt-1 text-xs leading-relaxed text-amber-100/70">
             {usage.message} The cards still show the current Free-plan quotas.
+          </p>
+        </section>
+      )}
+
+      {usage.status === "ready" && usage.message && (
+        <section className="mt-4 rounded-2xl border border-blue-500/20 bg-blue-500/[0.07] p-4">
+          <p className="text-sm font-semibold text-blue-200">
+            Live project checks loaded
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-blue-100/70">
+            {usage.message}
           </p>
         </section>
       )}
