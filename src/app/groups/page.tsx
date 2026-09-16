@@ -48,14 +48,6 @@ export default async function GroupsPage() {
             <NotificationBell />
 
             <AppMenu />
-
-            <Link
-              href="/groups/new"
-              aria-label="Create group"
-              className="flex size-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-600/20 transition-transform active:scale-95"
-            >
-              <Plus className="size-5" />
-            </Link>
           </div>
         </div>
       </header>
@@ -63,9 +55,21 @@ export default async function GroupsPage() {
       <section className="px-5 pb-8 pt-6">
         {/* Active */}
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Active
-          </h2>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Active
+            </h2>
+
+            {activeGroups.length > 0 && (
+              <Link
+                href="/groups/new"
+                className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600/10 px-3 text-xs font-semibold text-blue-300 transition-colors hover:bg-blue-600/15"
+              >
+                <Plus className="size-4" />
+                New group
+              </Link>
+            )}
+          </div>
 
           {activeGroups.length === 0 ? (
             <div className="rounded-2xl border border-white/[0.08] bg-card p-6 text-center">

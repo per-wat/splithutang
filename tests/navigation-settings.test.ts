@@ -63,3 +63,15 @@ test("profile, settings, notifications and tutorials have clear responsibilities
   assert.match(gettingStarted, /<RestartGettingStarted/);
   assert.match(shell, /"\/settings"/);
 });
+
+test("Groups keeps the app menu far-right and creates groups beside the Active list", async () => {
+  const page = await readFile("src/app/groups/page.tsx", "utf8");
+  const header = page.slice(0, page.indexOf("</header>"));
+  const content = page.slice(page.indexOf("<section"));
+
+  assert.ok(header.indexOf("<NotificationBell />") < header.indexOf("<AppMenu />"));
+  assert.doesNotMatch(header, /href="\/groups\/new"/);
+  assert.match(content, /Active/);
+  assert.match(content, /New group/);
+  assert.match(content, /Create Group/);
+});
