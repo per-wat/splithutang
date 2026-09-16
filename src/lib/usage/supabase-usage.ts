@@ -12,6 +12,10 @@ type SupabaseUsageApiResponse = {
   usages?: RawSupabaseUsageMetric[];
 };
 
+type SupabaseProjectApiResponse = {
+  organization_slug?: unknown;
+};
+
 export type SupabaseUsageResult = {
   status: "ready" | "not_configured" | "error";
   metrics: UsageMetric[];
@@ -35,7 +39,7 @@ function projectRefFromUrl(value: string | undefined) {
 }
 
 function usageDashboardUrl(
-  orgSlug: string | undefined,
+  orgSlug: string | null,
   projectRef: string | null,
 ) {
   if (orgSlug) {
@@ -56,16 +60,64 @@ function usageDashboardUrl(
     : "https://supabase.com/dashboard";
 }
 
+function failedUsageResult({
+  message,
+  projectRef,
+  dashboardUrl,
+  refreshedAt,
+}: {
+  message: string;
+  projectRef: string | null;
+  dashboardUrl: string;
+  refreshedAt: string;
+}): SupabaseUsageResult {
+  return {
+    status: "error",
+    metrics: buildUsageMetrics(),
+    projectRef,
+    dashboardUrl,
+    refreshedAt,
+    message,
+  };
+}
+
+function projectLookupError(status: number) {
+  if (status === 401) {
+    return "Supabase rejected SUPABASE_ACCESS_TOKEN. Replace it with a valid Personal Access Token.";
+  }
+
+  if (status === 403) {
+    return "The scoped Supabase token needs Project Settings → Read for this project.";
+  }
+
+  if (status === 404) {
+    return "Supabase could not find this project. Check SUPABASE_PROJECT_REF.";
+  }
+
+  return `Supabase project lookup failed (HTTP ${status}).`;
+}
+
+function usageRequestError(status: number) {
+  if (status === 401) {
+    return "Supabase rejected SUPABASE_ACCESS_TOKEN. Replace it with a valid Personal Access Token.";
+  }
+
+  if (status === 403) {
+    return "Supabase denied billing usage access. Grant Usage Analytics → Read to the scoped token; if it is already granted, use a classic Personal Access Token for this dashboard endpoint.";
+  }
+
+  return `Supabase billing usage request failed (HTTP ${status}).`;
+}
+
 export async function getSupabaseUsage(): Promise<SupabaseUsageResult> {
   const accessToken = process.env.SUPABASE_ACCESS_TOKEN?.trim();
-  const orgSlug = process.env.SUPABASE_ORGANIZATION_SLUG?.trim();
   const projectRef =
     process.env.SUPABASE_PROJECT_REF?.trim() ||
     projectRefFromUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
-  const dashboardUrl = usageDashboardUrl(orgSlug, projectRef);
+  let dashboardUrl = usageDashboardUrl(null, projectRef);
   const refreshedAt = new Date().toISOString();
 
-  if (!accessToken || !orgSlug || !projectRef) {
+  if (!accessToken || !projectRef) {
     return {
       status: "not_configured",
       metrics: buildUsageMetrics(),
@@ -73,53 +125,92 @@ export async function getSupabaseUsage(): Promise<SupabaseUsageResult> {
       dashboardUrl,
       refreshedAt,
       message:
-        "Add the server-only Supabase usage variables to load live billing-cycle values.",
+        "Add SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF as server-only environment variables to load live billing-cycle values.",
     };
   }
 
-  const url = new URL(
-    `/platform/organizations/${encodeURIComponent(orgSlug)}/usage`,
+  const projectUrl = new URL(
+    `/v1/projects/${encodeURIComponent(projectRef)}`,
     SUPABASE_MANAGEMENT_API_URL,
   );
-  url.searchParams.set("project_ref", projectRef);
+  const headers = {
+    Accept: "application/json",
+    Authorization: `Bearer ${accessToken}`,
+  };
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
+    const projectResponse = await fetch(projectUrl, {
+      headers,
       cache: "no-store",
     });
 
-    if (!response.ok) {
-      console.error("Supabase usage request failed:", response.status);
+    if (!projectResponse.ok) {
+      console.error("Supabase project lookup failed:", projectResponse.status);
 
-      return {
-        status: "error",
-        metrics: buildUsageMetrics(),
+      return failedUsageResult({
+        message: projectLookupError(projectResponse.status),
         projectRef,
         dashboardUrl,
         refreshedAt,
-        message:
-          "Live usage could not be loaded. Check the access token and organization slug.",
-      };
+      });
     }
 
-    const payload = (await response.json()) as SupabaseUsageApiResponse;
+    const project = (await projectResponse.json()) as SupabaseProjectApiResponse;
+    const orgSlug =
+      typeof project.organization_slug === "string"
+        ? project.organization_slug.trim()
+        : "";
+
+    if (!orgSlug) {
+      console.error(
+        "Supabase project response did not include an organization slug.",
+      );
+
+      return failedUsageResult({
+        message:
+          "Supabase returned project details without an organization. Open the dashboard for exact values.",
+        projectRef,
+        dashboardUrl,
+        refreshedAt,
+      });
+    }
+
+    dashboardUrl = usageDashboardUrl(orgSlug, projectRef);
+
+    const usageUrl = new URL(
+      `/platform/organizations/${encodeURIComponent(orgSlug)}/usage`,
+      SUPABASE_MANAGEMENT_API_URL,
+    );
+    usageUrl.searchParams.set("project_ref", projectRef);
+
+    const usageResponse = await fetch(usageUrl, {
+      headers,
+      cache: "no-store",
+    });
+
+    if (!usageResponse.ok) {
+      console.error("Supabase usage request failed:", usageResponse.status);
+
+      return failedUsageResult({
+        message: usageRequestError(usageResponse.status),
+        projectRef,
+        dashboardUrl,
+        refreshedAt,
+      });
+    }
+
+    const payload = (await usageResponse.json()) as SupabaseUsageApiResponse;
 
     if (!Array.isArray(payload.usages)) {
       console.error("Supabase usage response did not include a usages array.");
 
-      return {
-        status: "error",
-        metrics: buildUsageMetrics(),
+      return failedUsageResult({
+        message:
+          "Supabase returned an unexpected usage response. Open the dashboard for exact values.",
         projectRef,
         dashboardUrl,
         refreshedAt,
-        message:
-          "Supabase returned an unexpected usage response. Open the dashboard for exact values.",
-      };
+      });
     }
 
     return {
@@ -133,14 +224,12 @@ export async function getSupabaseUsage(): Promise<SupabaseUsageResult> {
   } catch (error) {
     console.error("Unable to reach the Supabase usage service:", error);
 
-    return {
-      status: "error",
-      metrics: buildUsageMetrics(),
+    return failedUsageResult({
+      message:
+        "Supabase usage is temporarily unavailable. The Free-plan limits below are still current.",
       projectRef,
       dashboardUrl,
       refreshedAt,
-      message:
-        "Supabase usage is temporarily unavailable. The Free-plan limits below are still current.",
-    };
+    });
   }
 }

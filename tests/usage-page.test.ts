@@ -73,3 +73,19 @@ test("usage route and sidebar both enforce the owner-only contract", async () =>
   assert.match(serverUsage, /Authorization: `Bearer \$\{accessToken\}`/);
   assert.match(serverUsage, /cache: "no-store"/);
 });
+
+test("usage configuration discovers the organization from the project", async () => {
+  const [environment, readme, serverUsage] = await Promise.all([
+    readFile(".env.example", "utf8"),
+    readFile("README.md", "utf8"),
+    readFile("src/lib/usage/supabase-usage.ts", "utf8"),
+  ]);
+
+  assert.doesNotMatch(environment, /SUPABASE_ORGANIZATION_SLUG/);
+  assert.doesNotMatch(serverUsage, /process\.env\.SUPABASE_ORGANIZATION_SLUG/);
+  assert.match(serverUsage, /`\/v1\/projects\/\$\{encodeURIComponent\(projectRef\)\}`/);
+  assert.match(serverUsage, /project\.organization_slug/);
+  assert.match(serverUsage, /Usage Analytics → Read/);
+  assert.match(readme, /Project Settings → Read/);
+  assert.match(readme, /Usage Analytics → Read/);
+});
