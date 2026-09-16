@@ -9,12 +9,14 @@ type GroupSettingsFormProps = {
   groupId: string;
   initialName: string;
   initialAllowDebtorSelfConfirm: boolean;
+  initialAllowAllMembersViewTransactions: boolean;
 };
 
 export function GroupSettingsForm({
   groupId,
   initialName,
   initialAllowDebtorSelfConfirm,
+  initialAllowAllMembersViewTransactions,
 }: GroupSettingsFormProps) {
   const router = useRouter();
 
@@ -25,6 +27,9 @@ export function GroupSettingsForm({
   const [allowDebtorSelfConfirm, setAllowDebtorSelfConfirm] = useState(
     initialAllowDebtorSelfConfirm,
   );
+
+  const [allowAllMembersViewTransactions, setAllowAllMembersViewTransactions] =
+    useState(initialAllowAllMembersViewTransactions);
 
   const [saving, setSaving] = useState(false);
 
@@ -47,6 +52,8 @@ export function GroupSettingsForm({
       p_name: name.trim(),
 
       p_allow_debtor_self_confirm: allowDebtorSelfConfirm,
+
+      p_allow_all_members_view_transactions: allowAllMembersViewTransactions,
     });
 
     if (error) {
@@ -80,6 +87,41 @@ export function GroupSettingsForm({
           onChange={(event) => setName(event.target.value)}
           className="mt-2 h-12 w-full rounded-2xl border border-border bg-background px-4 outline-none transition-colors focus:border-blue-500"
         />
+      </div>
+
+      <div className="flex items-start justify-between gap-4 rounded-2xl bg-white/[0.03] p-4">
+        <div>
+          <p className="text-sm font-semibold">
+            Show all transactions to members
+          </p>
+
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Every active member can view all past and future expenses, Hutang
+            and recurring payments in this group. New members can also see the
+            existing history.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          role="switch"
+          aria-label="Show all transactions to members"
+          aria-checked={allowAllMembersViewTransactions}
+          onClick={() =>
+            setAllowAllMembersViewTransactions((value) => !value)
+          }
+          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+            allowAllMembersViewTransactions ? "bg-blue-600" : "bg-white/10"
+          }`}
+        >
+          <span
+            className={`absolute left-1 top-1 size-5 rounded-full bg-white transition-transform ${
+              allowAllMembersViewTransactions
+                ? "translate-x-5"
+                : "translate-x-0"
+            }`}
+          />
+        </button>
       </div>
 
       <div className="flex items-start justify-between gap-4 rounded-2xl bg-white/[0.03] p-4">
