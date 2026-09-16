@@ -474,6 +474,7 @@ export type Database = {
       }
       groups: {
         Row: {
+          allow_all_members_view_transactions: boolean
           allow_debtor_self_confirm: boolean
           archived_at: string | null
           archived_by_user_id: string | null
@@ -484,6 +485,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allow_all_members_view_transactions?: boolean
           allow_debtor_self_confirm?: boolean
           archived_at?: string | null
           archived_by_user_id?: string | null
@@ -494,6 +496,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allow_all_members_view_transactions?: boolean
           allow_debtor_self_confirm?: boolean
           archived_at?: string | null
           archived_by_user_id?: string | null
@@ -1221,6 +1224,7 @@ export type Database = {
       unarchive_group: { Args: { p_group_id: string }; Returns: undefined }
       update_group_settings: {
         Args: {
+          p_allow_all_members_view_transactions?: boolean
           p_allow_debtor_self_confirm: boolean
           p_group_id: string
           p_name: string
