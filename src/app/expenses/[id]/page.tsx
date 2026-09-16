@@ -228,6 +228,7 @@ export default async function ExpenseDetailPage({
           name,
           avatar_color,
           avatar_path,
+          payment_qr_path,
           linked_user_id
         `,
     )
@@ -488,6 +489,7 @@ export default async function ExpenseDetailPage({
                   requiresConfirmation={participant.requiresConfirmation}
                   paymentMode={participant.paymentMode}
                   receiverName={payer.displayName}
+                  receiverPaymentQrPath={payer.payment_qr_path}
                 />
               </div>
             ))}

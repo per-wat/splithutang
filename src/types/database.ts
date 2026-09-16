@@ -782,6 +782,7 @@ export type Database = {
           linked_user_id: string | null
           name: string
           owner_id: string
+          payment_qr_path: string | null
           updated_at: string
         }
         Insert: {
@@ -792,6 +793,7 @@ export type Database = {
           linked_user_id?: string | null
           name: string
           owner_id: string
+          payment_qr_path?: string | null
           updated_at?: string
         }
         Update: {
@@ -802,6 +804,7 @@ export type Database = {
           linked_user_id?: string | null
           name?: string
           owner_id?: string
+          payment_qr_path?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -822,6 +825,7 @@ export type Database = {
           display_name: string
           id: string
           onboarding_dismissed_at: string | null
+          payment_qr_path: string | null
           updated_at: string
         }
         Insert: {
@@ -831,6 +835,7 @@ export type Database = {
           display_name: string
           id: string
           onboarding_dismissed_at?: string | null
+          payment_qr_path?: string | null
           updated_at?: string
         }
         Update: {
@@ -840,6 +845,7 @@ export type Database = {
           display_name?: string
           id?: string
           onboarding_dismissed_at?: string | null
+          payment_qr_path?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1237,6 +1243,10 @@ export type Database = {
           p_avatar_path?: string
           p_display_name: string
         }
+        Returns: undefined
+      }
+      update_my_payment_qr: {
+        Args: { p_payment_qr_path?: string | null }
         Returns: undefined
       }
       update_recurring_arrangement: {

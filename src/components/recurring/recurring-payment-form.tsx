@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { monthLabels, sumSelectedPeriods } from "@/lib/recurring";
 import { createClient } from "@/lib/supabase/client";
+import { PaymentQrPanel } from "@/components/payments/payment-qr-panel";
 
 type PayablePeriod = {
   id: string;
@@ -21,6 +22,7 @@ type RecurringPaymentFormProps = {
   periods: PayablePeriod[];
   requiresConfirmation: boolean;
   payerName: string;
+  receiverPaymentQrPath: string | null;
   mode: "mark-paid" | "record-received";
   onClose: () => void;
 };
@@ -32,6 +34,7 @@ export function RecurringPaymentForm({
   periods,
   requiresConfirmation,
   payerName,
+  receiverPaymentQrPath,
   mode,
   onClose,
 }: RecurringPaymentFormProps) {
@@ -96,6 +99,7 @@ export function RecurringPaymentForm({
           <div className="flex items-center justify-between gap-3"><span className="text-sm text-blue-200">{selected.length} month{selected.length === 1 ? "" : "s"} selected</span><span className="font-bold text-blue-200">RM {total.toFixed(2)}</span></div>
         </div>
         {requiresConfirmation && <p className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">This only records the payment in SplitHutang. {payerName} must confirm they received it before these months are marked as paid.</p>}
+        {mode === "mark-paid" && <PaymentQrPanel paymentQrPath={receiverPaymentQrPath} receiverName={payerName} compact />}
         <label htmlFor="recurring-payment-note" className="mt-4 block text-sm font-semibold">Note <span className="font-normal text-muted-foreground">(optional)</span></label>
         <input id="recurring-payment-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="e.g. DuitNow transfer" className="form-input mt-2" />
         {error && <p className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</p>}
