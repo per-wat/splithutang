@@ -17,6 +17,7 @@ import { RecurringSummary, type HomeRecurringItem } from "@/components/home/recu
 import { recurringStatusCopy, type RecurringTimelineStatus } from "@/lib/recurring";
 import { GettingStartedCard } from "@/components/onboarding/getting-started-card";
 import { parseLearningProgress } from "@/lib/onboarding/learning";
+import { isUsageOwner } from "@/lib/usage/access";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -218,6 +219,7 @@ export default async function Home() {
   return (
     <>
       <HomeHeader
+        canViewUsage={isUsageOwner(user.id)}
         displayName={displayName}
         avatarColor={avatarColor}
         avatarUrl={avatarUrl}

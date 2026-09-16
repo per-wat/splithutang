@@ -14,6 +14,26 @@ npm run dev
 
 Fill in the Supabase values printed by `npx supabase status`. Never expose `SUPABASE_SECRET_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY`, `NOTIFICATION_WEBHOOK_SECRET`, or `CRON_SECRET` to browser code.
 
+### Owner usage page
+
+The owner-only `/usage` page reads current billing-cycle metrics from Supabase's
+platform usage endpoint. Set these server-only values locally and in Vercel:
+
+- `SUPABASE_ACCESS_TOKEN`: a Supabase Personal Access Token created under
+  **Account → Access Tokens**. Do not prefix it with `NEXT_PUBLIC_`.
+- `SUPABASE_ORGANIZATION_SLUG`: the organization slug shown in the Supabase
+  dashboard URL.
+- `SUPABASE_PROJECT_REF`: the project's 20-character reference. This is optional
+  when `NEXT_PUBLIC_SUPABASE_URL` uses the standard `<ref>.supabase.co` hostname.
+- `USAGE_OWNER_USER_ID`: the Supabase Auth UUID allowed to open `/usage`. Keep
+  this server-only and do not prefix it with `NEXT_PUBLIC_`.
+
+The app compares the verified signed-in user against `USAGE_OWNER_USER_ID` on the
+server before requesting or rendering usage data. The client receives only an
+access boolean. Other users do not see the sidebar entry and receive a 404 from
+the route. If the platform usage request fails, the page shows the known
+Free-plan quotas and links to Supabase's detailed usage dashboard.
+
 Run verification with:
 
 ```bash

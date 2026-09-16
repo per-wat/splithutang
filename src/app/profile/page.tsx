@@ -5,6 +5,7 @@ import { AppMenu } from "@/components/layout/app-menu";
 import { AppBackButton } from "@/components/layout/app-back-button";
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isUsageOwner } from "@/lib/usage/access";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -59,6 +60,7 @@ export default async function ProfilePage() {
         </div>
 
         <AppMenu
+          initialCanViewUsage={isUsageOwner(user.id)}
           initialProfile={{
             displayName: profile.display_name,
             avatarColor: profile.avatar_color,

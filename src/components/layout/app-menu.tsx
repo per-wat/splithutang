@@ -7,6 +7,7 @@ import {
   CalendarClock,
   ChevronRight,
   FileText,
+  Gauge,
   Home,
   ListChecks,
   Menu,
@@ -31,12 +32,14 @@ type MenuProfile = {
 
 type AppMenuProps = {
   initialProfile?: MenuProfile;
+  initialCanViewUsage?: boolean;
 };
 
 type MenuItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  ownerOnly?: boolean;
 };
 
 const mainItems: MenuItem[] = [
@@ -51,13 +54,14 @@ const mainItems: MenuItem[] = [
 const supportItems: MenuItem[] = [
   { label: "Getting Started", href: "/getting-started", icon: ListChecks },
   { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Usage", href: "/usage", icon: Gauge, ownerOnly: true },
 ];
 
 function isCurrentRoute(pathname: string, href: string) {
   return href === "/" ? pathname === href : pathname.startsWith(href);
 }
 
-export function AppMenu({ initialProfile }: AppMenuProps) {
+export function AppMenu({ initialProfile, initialCanViewUsage }: AppMenuProps) {
   const pathname = usePathname();
   const supabase = useMemo(() => createClient(), []);
   const { open, openOverlay, dismiss, closeForNavigation } =
@@ -66,20 +70,47 @@ export function AppMenu({ initialProfile }: AppMenuProps) {
     initialProfile ?? null,
   );
   const [profileLoaded, setProfileLoaded] = useState(Boolean(initialProfile));
+  const [canViewUsage, setCanViewUsage] = useState(
+    initialCanViewUsage ?? false,
+  );
+  const [accessLoaded, setAccessLoaded] = useState(
+    initialCanViewUsage !== undefined,
+  );
 
   async function loadProfile() {
-    if (profileLoaded) return;
+    if (profileLoaded && accessLoaded) return;
 
-    setProfileLoaded(true);
+    const shouldLoadProfile = !profileLoaded;
+    const shouldLoadAccess = !accessLoaded;
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    if (shouldLoadProfile) {
+      setProfileLoaded(true);
+    }
 
-    if (userError || !user) {
+    if (shouldLoadAccess) {
+      setAccessLoaded(true);
+    }
+
+    const [userResult, accessResponse] = await Promise.all([
+      shouldLoadProfile ? supabase.auth.getUser() : Promise.resolve(null),
+      shouldLoadAccess
+        ? fetch("/api/usage/access", { cache: "no-store" }).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
+    if (accessResponse?.ok) {
+      const access = (await accessResponse.json()) as {
+        canViewUsage?: boolean;
+      };
+
+      setCanViewUsage(access.canViewUsage === true);
+    }
+
+    if (!userResult || userResult.error || !userResult.data.user) {
       return;
     }
+
+    const user = userResult.data.user;
 
     const { data: profileRow } = await supabase
       .from("profiles")
@@ -184,7 +215,9 @@ export function AppMenu({ initialProfile }: AppMenuProps) {
                 Support &amp; setup
               </p>
               <div className="space-y-1">
-                {supportItems.map(renderMenuItem)}
+                {supportItems
+                  .filter((item) => !item.ownerOnly || canViewUsage)
+                  .map(renderMenuItem)}
               </div>
             </nav>
 
