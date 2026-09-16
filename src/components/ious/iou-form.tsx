@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 import { PersonSelector } from "./person-selector";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 type PersonOption = {
   id: string;
@@ -137,7 +138,7 @@ export function IouForm({ groups }: IouFormProps) {
       return;
     }
 
-    router.push("/ious");
+    router.replace("/ious");
     router.refresh();
   }
 
@@ -146,14 +147,7 @@ export function IouForm({ groups }: IouFormProps) {
       {/* Header */}
       <header className="sticky top-0 z-20 -mx-4 bg-background px-4 pb-3 pt-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            aria-label="Go back"
-            className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </button>
+          <AppBackButton fallbackHref="/ious" label="Go back" />
 
           <h1 className="text-xl font-bold">Add Hutang</h1>
         </div>

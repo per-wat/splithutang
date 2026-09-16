@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { ArrowRight, FileText } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
 import { IouPaymentAction } from "@/components/ious/iou-payment-action";
@@ -8,6 +7,7 @@ import { getPersonDisplayName } from "@/lib/person-display-name";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly, formatTimestampDateMY } from "@/lib/date-format";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 type IouDetailPageProps = {
   params: Promise<{
@@ -237,13 +237,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
       <div className="mx-auto w-full max-w-md px-4 pb-10">
         {/* Header */}
         <header className="sticky top-0 z-20 -mx-4 flex items-center gap-3 bg-background px-4 pb-3 pt-6">
-          <Link
-            href="/ious"
-            aria-label="Back to Hutang"
-            className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </Link>
+          <AppBackButton fallbackHref="/ious" label="Back to Hutang" />
 
           <h1 className="text-xl font-bold">Hutang Details</h1>
         </header>

@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { UsersRound } from "lucide-react";
+import { AppMenu } from "@/components/layout/app-menu";
 
 export function PeopleHeader() {
   return (
@@ -15,15 +14,7 @@ export function PeopleHeader() {
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href="/groups"
-            className="flex h-10 shrink-0 items-center gap-2 rounded-xl border border-white/[0.08] bg-card px-3 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <UsersRound className="size-4" />
-            Groups
-          </Link>
-        </div>
+        <AppMenu />
       </div>
     </header>
   );

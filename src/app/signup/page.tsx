@@ -79,7 +79,7 @@ function SignupForm() {
      * immediately.
      */
     if (data.session) {
-      router.push(nextPath);
+      router.replace(nextPath);
 
       router.refresh();
       return;

@@ -1,10 +1,8 @@
-import Link from "next/link";
-import { ArrowLeft, ChevronRight, ListChecks } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { ProfileSettingsForm } from "@/components/profile/profile-settings-form";
-import { NotificationSettings } from "@/components/profile/notification-settings";
-import { RestartGettingStarted } from "@/components/profile/restart-getting-started";
+import { AppMenu } from "@/components/layout/app-menu";
+import { AppBackButton } from "@/components/layout/app-back-button";
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -47,41 +45,29 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex items-center gap-3 bg-background px-5 pb-3 pt-6">
-        <Link
-          href="/"
-          aria-label="Back to home"
-          className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"
-        >
-          <ArrowLeft className="size-5" />
-        </Link>
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 bg-background px-5 pb-3 pt-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <AppBackButton fallbackHref="/" label="Go back" />
 
-        <div>
-          <h1 className="text-xl font-bold">Profile & Settings</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold">Profile</h1>
 
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Manage your SplitHutang account
-          </p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              Manage your personal details
+            </p>
+          </div>
         </div>
+
+        <AppMenu
+          initialProfile={{
+            displayName: profile.display_name,
+            avatarColor: profile.avatar_color,
+            avatarUrl,
+          }}
+        />
       </header>
 
       <div className="px-5 pb-8 pt-4">
-        <Link
-          href="/getting-started"
-          className="mb-6 flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-card p-4 transition-colors hover:bg-white/[0.04]"
-        >
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-blue-600/10 text-blue-400">
-            <ListChecks className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="font-semibold">Getting Started</h2>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              Device setup, groups, expenses, payments, and quick help
-            </p>
-          </div>
-          <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
-        </Link>
-
         <ProfileSettingsForm
           userId={user.id}
           email={user.email ?? ""}
@@ -90,10 +76,6 @@ export default async function ProfilePage() {
           initialAvatarPath={profile.avatar_path}
           initialAvatarUrl={avatarUrl}
         />
-
-        <NotificationSettings userId={user.id} />
-
-        <RestartGettingStarted userId={user.id} />
       </div>
     </>
   );

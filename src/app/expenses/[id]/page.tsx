@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ArrowLeft, Receipt } from "lucide-react";
+import { Receipt } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
 import { ExpenseParticipantRow } from "@/components/expenses/expense-participant-row";
@@ -7,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPersonDisplayName } from "@/lib/person-display-name";
 import { PaymentReviewActions } from "@/components/payments/payment-review-actions";
 import { formatDateOnly, formatTimestampDateMY } from "@/lib/date-format";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 type ExpenseDetailPageProps = {
   params: Promise<{
@@ -355,13 +355,7 @@ export default async function ExpenseDetailPage({
     <main className="min-h-dvh bg-background text-foreground">
       <div className="mx-auto w-full max-w-md px-4 pb-10">
         <header className="sticky top-0 z-20 -mx-4 flex items-center gap-3 bg-background px-4 pb-3 pt-6">
-          <Link
-            href="/expenses"
-            aria-label="Back to expenses"
-            className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </Link>
+          <AppBackButton fallbackHref="/expenses" label="Back to expenses" />
 
           <h1 className="text-xl font-bold">Expense Details</h1>
         </header>

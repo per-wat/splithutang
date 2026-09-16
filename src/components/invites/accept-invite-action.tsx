@@ -45,7 +45,7 @@ export function AcceptInviteAction({ token }: AcceptInviteActionProps) {
       return;
     }
 
-    router.push(`/groups/${groupId}`);
+    router.replace(`/groups/${groupId}`);
 
     router.refresh();
   }

@@ -1,10 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft,
   Camera,
   LoaderCircle,
   RotateCcw,
@@ -27,6 +25,7 @@ import { fuseReceiptPriceCandidates } from "@/lib/receipts/fuse-receipt-price-ca
 import { groupReceiptNameCandidates } from "@/lib/receipts/group-receipt-name-candidates";
 import { matchReceiptItems } from "@/lib/receipts/match-receipt-items";
 import { ReceiptReviewEditor } from "@/components/receipts/receipt-review-editor";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
@@ -507,13 +506,11 @@ export function ReceiptTestClient() {
     <main className="min-h-screen bg-zinc-950 px-4 pb-12 text-zinc-100">
       <div className="mx-auto w-full max-w-lg">
         <header className="flex items-center gap-3 py-5">
-          <Link
-            href="/expenses"
-            className="flex size-10 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800"
-            aria-label="Back to expenses"
-          >
-            <ArrowLeft className="size-5" />
-          </Link>
+          <AppBackButton
+            fallbackHref="/expenses"
+            label="Back to expenses"
+            className="border-0 bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
+          />
 
           <div>
             <h1 className="text-xl font-semibold">Receipt OCR Test</h1>

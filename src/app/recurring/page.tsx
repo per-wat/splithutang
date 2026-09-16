@@ -3,6 +3,7 @@ import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { RecurringCard } from "@/components/recurring/recurring-card";
+import { AppMenu } from "@/components/layout/app-menu";
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseRecurringTimeline, type RecurringOverview } from "@/lib/recurring";
@@ -50,9 +51,13 @@ export default async function RecurringPage({ searchParams }: RecurringPageProps
   return (
     <>
       <header className="px-5 pt-8">
-        <div>
-          <h1 className="text-[30px] font-bold leading-tight tracking-tight">Recurring Payments</h1>
-          <p className="mt-1 text-sm text-muted-foreground">See what is paid and what still needs payment</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[30px] font-bold leading-tight tracking-tight">Recurring Payments</h1>
+            <p className="mt-1 text-sm text-muted-foreground">See what is paid and what still needs payment</p>
+          </div>
+
+          <AppMenu />
         </div>
 
         <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/[0.08] bg-card px-3 py-2">
