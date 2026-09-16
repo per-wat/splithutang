@@ -10,12 +10,14 @@ export function RestartGettingStarted({ userId }: { userId: string }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [restarting, setRestarting] = useState(false);
+  const [restarted, setRestarted] = useState(false);
   const [error, setError] = useState("");
 
   async function restart() {
     if (restarting) return;
 
     setRestarting(true);
+    setRestarted(false);
     setError("");
 
     const { error: updateError } = await supabase
@@ -31,7 +33,9 @@ export function RestartGettingStarted({ userId }: { userId: string }) {
       return;
     }
 
-    router.push("/getting-started");
+    setRestarted(true);
+    setRestarting(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
     router.refresh();
   }
 
@@ -51,7 +55,8 @@ export function RestartGettingStarted({ userId }: { userId: string }) {
             {restarting ? "Restarting..." : "Restart Getting Started"}
           </h2>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Show the tutorial again using your current setup and activity.
+            Show the tutorial progress on Home again and return to the first
+            section above.
           </p>
         </div>
       </button>
@@ -59,6 +64,12 @@ export function RestartGettingStarted({ userId }: { userId: string }) {
       {error && (
         <p role="alert" className="mt-3 text-sm text-red-400">
           {error}
+        </p>
+      )}
+
+      {restarted && (
+        <p role="status" className="mt-3 text-sm text-emerald-400">
+          Getting Started is active again and will appear on Home.
         </p>
       )}
     </section>

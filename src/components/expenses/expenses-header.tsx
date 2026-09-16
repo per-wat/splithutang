@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 
+import { AppMenu } from "@/components/layout/app-menu";
+
 export function ExpensesHeader() {
   return (
     <header className="px-5 pt-8">
@@ -14,6 +16,8 @@ export function ExpensesHeader() {
             Keep track of shared spending
           </p>
         </div>
+
+        <AppMenu />
       </div>
 
       <Link href="/recurring" className="mt-5 flex items-center justify-between rounded-2xl border border-blue-500/15 bg-blue-500/[0.06] px-4 py-3 text-sm font-semibold text-blue-300">

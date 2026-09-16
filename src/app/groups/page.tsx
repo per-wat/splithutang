@@ -3,6 +3,7 @@ import { Archive, ChevronRight, Plus, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { AppMenu } from "@/components/layout/app-menu";
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,6 +46,8 @@ export default async function GroupsPage() {
 
           <div className="flex shrink-0 items-center gap-2">
             <NotificationBell />
+
+            <AppMenu />
 
             <Link
               href="/groups/new"

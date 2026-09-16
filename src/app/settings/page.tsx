@@ -1,13 +1,14 @@
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { NotificationCentre } from "@/components/notifications/notification-centre";
+import { AppInstallationSettings } from "@/components/settings/app-installation-settings";
+import { NotificationSettings } from "@/components/settings/notification-settings";
 import { AppMenu } from "@/components/layout/app-menu";
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function NotificationsPage() {
+export default async function SettingsPage() {
   const supabase = await createClient();
   const user = await getVerifiedUser(supabase);
 
@@ -17,7 +18,7 @@ export default async function NotificationsPage() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/[0.05] bg-background/95 px-5 pb-3 pt-6 backdrop-blur-md">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 bg-background px-5 pb-3 pt-6">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
@@ -28,15 +29,20 @@ export default async function NotificationsPage() {
           </Link>
 
           <div className="min-w-0">
-            <h1 className="text-xl font-bold">Notifications</h1>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">Your SplitHutang activity</p>
+            <h1 className="text-xl font-bold">Settings</h1>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              Manage this device and your alerts
+            </p>
           </div>
         </div>
 
         <AppMenu />
       </header>
 
-      <NotificationCentre />
+      <div className="px-5 pb-8 pt-4">
+        <AppInstallationSettings />
+        <NotificationSettings userId={user.id} />
+      </div>
     </>
   );
 }
