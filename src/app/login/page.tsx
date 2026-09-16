@@ -62,7 +62,7 @@ function LoginForm() {
       return;
     }
 
-    router.push(nextPath);
+      router.replace(nextPath);
 
     router.refresh();
   }

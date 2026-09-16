@@ -54,7 +54,7 @@ test("recurring payments use the same plain-language wording", () => {
   const recurringDetail = source("src/app/recurring/[id]/page.tsx");
 
   assert.match(navigation, /Add Recurring Payment/);
-  assert.match(navigation, /router\.push\("\/recurring\/new"\)/);
+  assert.match(navigation, /openAddRoute\("\/recurring\/new"\)/);
   assert.doesNotMatch(recurringPage, /href="\/recurring\/new"/);
   assert.match(recurringCard, /You will receive RM/);
   assert.match(recurringCard, /You need to pay RM/);

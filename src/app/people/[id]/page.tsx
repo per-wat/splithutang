@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ArrowLeft,
   ArrowRight,
   Banknote,
   FileText,
@@ -12,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDateOnly, formatTimestampDateMY } from "@/lib/date-format";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { DeleteLocalContactAction } from "@/components/people/delete-local-contact-action";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 type PersonDetailPageProps = {
   params: Promise<{
@@ -303,13 +303,7 @@ export default async function PersonDetailPage({
       <div className="mx-auto w-full max-w-md px-4 pb-10">
         {/* Header */}
         <header className="sticky top-0 z-20 -mx-4 flex items-center gap-3 bg-background px-4 pb-3 pt-6">
-          <Link
-            href="/people"
-            aria-label="Back to people"
-            className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </Link>
+          <AppBackButton fallbackHref="/people" label="Back to people" />
 
           <h1 className="text-xl font-bold">Person Details</h1>
         </header>

@@ -1,9 +1,8 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { NotificationCentre } from "@/components/notifications/notification-centre";
 import { AppMenu } from "@/components/layout/app-menu";
+import { AppBackButton } from "@/components/layout/app-back-button";
 import { getVerifiedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,13 +18,7 @@ export default async function NotificationsPage() {
     <>
       <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/[0.05] bg-background/95 px-5 pb-3 pt-6 backdrop-blur-md">
         <div className="flex min-w-0 items-center gap-3">
-          <Link
-            href="/"
-            aria-label="Back to home"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </Link>
+          <AppBackButton fallbackHref="/" label="Go back" />
 
           <div className="min-w-0">
             <h1 className="text-xl font-bold">Notifications</h1>

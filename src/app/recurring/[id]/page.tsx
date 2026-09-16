@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, CalendarClock, Pencil } from "lucide-react";
+import { CalendarClock, Pencil } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
 import { PaymentReviewActions } from "@/components/payments/payment-review-actions";
@@ -9,6 +9,7 @@ import { SkipPeriodAction } from "@/components/recurring/skip-period-action";
 import { formatDateOnly } from "@/lib/date-format";
 import { monthLabels, parseRecurringDetail, recurringStatusCopy } from "@/lib/recurring";
 import { createClient } from "@/lib/supabase/server";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -65,7 +66,7 @@ export default async function RecurringDetailPage({ params, searchParams }: Prop
     <main className="min-h-dvh bg-background text-foreground">
       <div className="mx-auto w-full max-w-md px-4 pb-10">
         <header className="sticky top-0 z-20 -mx-4 flex items-center gap-3 bg-background px-4 pb-3 pt-6">
-          <Link href="/recurring" aria-label="Back to recurring" className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"><ArrowLeft className="size-5" /></Link>
+          <AppBackButton fallbackHref="/recurring" label="Back to recurring" />
           <h1 className="min-w-0 flex-1 truncate text-xl font-bold">Recurring Payment</h1>
           {detail.canEdit && <Link href={`/recurring/${detail.id}/edit`} aria-label="Edit recurring payment" className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"><Pencil className="size-4" /></Link>}
         </header>

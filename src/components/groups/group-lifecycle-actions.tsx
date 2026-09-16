@@ -125,7 +125,7 @@ export function GroupLifecycleActions({
       return;
     }
 
-    router.push("/groups");
+    router.replace("/groups");
 
     router.refresh();
   }

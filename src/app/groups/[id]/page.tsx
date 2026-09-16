@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Archive, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Archive, ShieldCheck } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
 import {
@@ -17,6 +16,7 @@ import {
   type GroupMemberView,
 } from "@/components/groups/group-member-manager";
 import { GroupSettingsForm } from "@/components/groups/group-settings-form";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 import { getPersonDisplayName } from "@/lib/person-display-name";
 import { createClient } from "@/lib/supabase/server";
@@ -350,13 +350,7 @@ export default async function GroupDetailPage({
       <div className="mx-auto w-full max-w-md px-4 pb-10">
         {/* Header */}
         <header className="sticky top-0 z-20 -mx-4 flex items-center gap-3 bg-background px-4 pb-3 pt-6">
-          <Link
-            href="/groups"
-            aria-label="Back to groups"
-            className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </Link>
+          <AppBackButton fallbackHref="/groups" label="Back to groups" />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">

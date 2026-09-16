@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowLeft, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { splitAmountEqually, type RecurringDetail } from "@/lib/recurring";
 import { createClient } from "@/lib/supabase/client";
+import { AppBackButton } from "@/components/layout/app-back-button";
 
 export type RecurringPersonOption = {
   id: string;
@@ -132,7 +133,7 @@ export function RecurringForm({ groups, existing }: RecurringFormProps) {
       return;
     }
     const id = existing?.id ?? result.data;
-    router.push(id ? `/recurring/${id}` : "/recurring");
+    router.replace(id ? `/recurring/${id}` : "/recurring");
     router.refresh();
   }
 
@@ -140,9 +141,7 @@ export function RecurringForm({ groups, existing }: RecurringFormProps) {
     <main className="min-h-dvh bg-background text-foreground">
       <div className="mx-auto w-full max-w-md px-4 pb-10">
         <header className="sticky top-0 z-20 -mx-4 flex items-center gap-3 bg-background px-4 pb-3 pt-6">
-          <button type="button" onClick={() => router.back()} aria-label="Go back" className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
-            <ArrowLeft className="size-5" />
-          </button>
+          <AppBackButton fallbackHref="/recurring" label="Go back" />
           <h1 className="text-xl font-bold">{editing ? "Edit Recurring Payment" : "Add Recurring Payment"}</h1>
         </header>
 

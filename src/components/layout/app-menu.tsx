@@ -21,6 +21,7 @@ import { useMemo, useState } from "react";
 
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { createClient } from "@/lib/supabase/client";
+import { useHistoryOverlay } from "@/hooks/use-history-overlay";
 
 type MenuProfile = {
   displayName: string;
@@ -59,7 +60,8 @@ function isCurrentRoute(pathname: string, href: string) {
 export function AppMenu({ initialProfile }: AppMenuProps) {
   const pathname = usePathname();
   const supabase = useMemo(() => createClient(), []);
-  const [open, setOpen] = useState(false);
+  const { open, openOverlay, dismiss, closeForNavigation } =
+    useHistoryOverlay("app-menu");
   const [profile, setProfile] = useState<MenuProfile | null>(
     initialProfile ?? null,
   );
@@ -104,10 +106,11 @@ export function AppMenu({ initialProfile }: AppMenuProps) {
   }
 
   function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
-
     if (nextOpen) {
+      openOverlay();
       void loadProfile();
+    } else {
+      dismiss();
     }
   }
 
@@ -119,7 +122,8 @@ export function AppMenu({ initialProfile }: AppMenuProps) {
       <Link
         key={item.href}
         href={item.href}
-        onClick={() => setOpen(false)}
+        replace
+        onClick={closeForNavigation}
         aria-current={active ? "page" : undefined}
         className={`flex h-12 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors ${
           active
@@ -187,7 +191,8 @@ export function AppMenu({ initialProfile }: AppMenuProps) {
             <div className="mt-auto pt-8">
               <Link
                 href="/profile"
-                onClick={() => setOpen(false)}
+                replace
+                onClick={closeForNavigation}
                 className={`flex items-center gap-3 rounded-2xl border p-3 transition-colors ${
                   pathname === "/profile"
                     ? "border-blue-500/30 bg-blue-600/[0.08]"
