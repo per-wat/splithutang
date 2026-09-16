@@ -27,6 +27,7 @@ type ExpenseParticipantRowProps = {
   requiresConfirmation: boolean;
   paymentMode: "mark-paid" | "record-received";
   receiverName: string;
+  receiverPaymentQrPath: string | null;
 };
 
 export function ExpenseParticipantRow({
@@ -42,6 +43,7 @@ export function ExpenseParticipantRow({
   requiresConfirmation,
   paymentMode,
   receiverName,
+  receiverPaymentQrPath,
 }: ExpenseParticipantRowProps) {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
@@ -141,6 +143,7 @@ export function ExpenseParticipantRow({
           requiresConfirmation={requiresConfirmation}
           paymentMode={paymentMode}
           receiverName={receiverName}
+          receiverPaymentQrPath={receiverPaymentQrPath}
           onClose={() => setShowPaymentForm(false)}
         />
       )}

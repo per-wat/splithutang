@@ -11,6 +11,7 @@ const APP_SHELL_ROUTES = new Set([
   "/getting-started",
   "/ious",
   "/notifications",
+  "/payment-qr",
   "/people",
   "/profile",
   "/recurring",

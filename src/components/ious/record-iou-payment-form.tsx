@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { PaymentQrPanel } from "@/components/payments/payment-qr-panel";
 
 type RecordIouPaymentFormProps = {
   iouId: string;
@@ -14,6 +15,7 @@ type RecordIouPaymentFormProps = {
   availableToSubmit: number;
   requiresConfirmation: boolean;
   paymentMode: "mark-paid" | "record-received";
+  receiverPaymentQrPath: string | null;
   onClose: () => void;
 };
 
@@ -25,6 +27,7 @@ export function RecordIouPaymentForm({
   availableToSubmit,
   requiresConfirmation,
   paymentMode,
+  receiverPaymentQrPath,
   onClose,
 }: RecordIouPaymentFormProps) {
   const router = useRouter();
@@ -77,7 +80,7 @@ export function RecordIouPaymentForm({
         className="absolute inset-0"
       />
 
-      <div className="relative z-10 w-full max-w-md rounded-t-3xl border-t border-white/[0.08] bg-background px-5 pb-8 pt-5 shadow-2xl">
+      <div className="relative z-10 max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t border-white/[0.08] bg-background px-5 pb-8 pt-5 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold">
@@ -124,6 +127,13 @@ export function RecordIouPaymentForm({
               confirm receiving it.
             </p>
           </div>
+        )}
+
+        {isMarkingOwnPayment && (
+          <PaymentQrPanel
+            paymentQrPath={receiverPaymentQrPath}
+            receiverName={creditorName}
+          />
         )}
 
         <div className="mt-4">

@@ -13,6 +13,7 @@ test("the app menu exposes every primary destination and keeps profile separate"
     "/people",
     "/groups",
     "/getting-started",
+    "/payment-qr",
     "/settings",
   ]) {
     assert.match(menu, new RegExp(`href: "${route.replace("/", "\\/")}"`));
@@ -35,6 +36,7 @@ test("every primary page header provides the navigation drawer", async () => {
     readFile("src/app/notifications/page.tsx", "utf8"),
     readFile("src/app/getting-started/page.tsx", "utf8"),
     readFile("src/app/settings/page.tsx", "utf8"),
+    readFile("src/app/payment-qr/page.tsx", "utf8"),
     readFile("src/app/profile/page.tsx", "utf8"),
   ]);
 

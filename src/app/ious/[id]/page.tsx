@@ -81,7 +81,9 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
 
     supabase
       .from("people")
-      .select("id, name, avatar_color, avatar_path, linked_user_id")
+      .select(
+        "id, name, avatar_color, avatar_path, payment_qr_path, linked_user_id",
+      )
       .in("id", [iou.from_person_id, iou.to_person_id]),
 
     supabase
@@ -406,6 +408,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               remaining={remaining}
               availableToSubmit={availableToSubmit}
               requiresConfirmation={requiresConfirmation}
+              receiverPaymentQrPath={creditor.payment_qr_path}
               paymentMode={
                 currentUserIsDebtor ? "mark-paid" : "record-received"
               }

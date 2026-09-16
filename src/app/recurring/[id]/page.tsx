@@ -43,6 +43,12 @@ export default async function RecurringDetailPage({ params, searchParams }: Prop
   const detail = parseRecurringDetail(data);
   if (!detail) notFound();
 
+  const { data: payer } = await supabase
+    .from("people")
+    .select("payment_qr_path")
+    .eq("id", detail.payerPersonId)
+    .maybeSingle();
+
   const timeline = Array.from({ length: 12 }, (_, index) => {
     const period = detail.periods.find((item) => new Date(`${item.periodStart}T00:00:00Z`).getUTCMonth() === index);
     return {
@@ -134,7 +140,7 @@ export default async function RecurringDetailPage({ params, searchParams }: Prop
                     </div>
                     <div className="mt-2 flex justify-end">
                       {obligation.paymentStatus === "unpaid" && (
-                        <RecurringObligationAction arrangementId={detail.id} personId={obligation.personId} personName={obligation.name} payerName={detail.payerName} periods={detail.periods} requiresConfirmation={requiresConfirmation} mode={detail.isPayer ? "record-received" : "mark-paid"} />
+                        <RecurringObligationAction arrangementId={detail.id} personId={obligation.personId} personName={obligation.name} payerName={detail.payerName} receiverPaymentQrPath={payer?.payment_qr_path ?? null} periods={detail.periods} requiresConfirmation={requiresConfirmation} mode={detail.isPayer ? "record-received" : "mark-paid"} />
                       )}
                     </div>
                     {detail.isPayer && obligation.paymentRecordStatus === "pending" && obligation.paymentId && <PaymentReviewActions kind="recurring" paymentId={obligation.paymentId} />}

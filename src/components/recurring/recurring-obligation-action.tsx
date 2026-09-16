@@ -11,6 +11,7 @@ type Props = {
   personId: string;
   personName: string;
   payerName: string;
+  receiverPaymentQrPath: string | null;
   periods: RecurringPeriod[];
   requiresConfirmation: boolean;
   mode: "mark-paid" | "record-received";
@@ -30,7 +31,7 @@ export function RecurringObligationAction(props: Props) {
       <button type="button" onClick={() => setOpen(true)} className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white">
         {props.mode === "mark-paid" ? "I’ve paid" : "Mark as received"}
       </button>
-      {open && <RecurringPaymentForm arrangementId={props.arrangementId} fromPersonId={props.personId} personName={props.personName} periods={payable} requiresConfirmation={props.requiresConfirmation} payerName={props.payerName} mode={props.mode} onClose={() => setOpen(false)} />}
+      {open && <RecurringPaymentForm arrangementId={props.arrangementId} fromPersonId={props.personId} personName={props.personName} periods={payable} requiresConfirmation={props.requiresConfirmation} payerName={props.payerName} receiverPaymentQrPath={props.receiverPaymentQrPath} mode={props.mode} onClose={() => setOpen(false)} />}
     </>
   );
 }
