@@ -2,12 +2,14 @@ import { AppMenu } from "@/components/layout/app-menu";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
 type HomeHeaderProps = {
+  canViewUsage: boolean;
   displayName: string;
   avatarColor: string;
   avatarUrl: string | null;
 };
 
 export function HomeHeader({
+  canViewUsage,
   displayName,
   avatarColor,
   avatarUrl,
@@ -33,6 +35,7 @@ export function HomeHeader({
           <NotificationBell />
 
           <AppMenu
+            initialCanViewUsage={canViewUsage}
             initialProfile={{ displayName, avatarColor, avatarUrl }}
           />
         </div>
