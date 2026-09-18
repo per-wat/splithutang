@@ -7,6 +7,7 @@ import { ProfileAvatar } from "@/components/profile/profile-avatar";
 
 type ExpenseParticipantRowProps = {
   expenseId: string;
+  expenseName: string;
 
   person: {
     id: string;
@@ -32,6 +33,7 @@ type ExpenseParticipantRowProps = {
 
 export function ExpenseParticipantRow({
   expenseId,
+  expenseName,
   person,
   shareAmount,
   paidAmount,
@@ -136,6 +138,7 @@ export function ExpenseParticipantRow({
       {showPaymentForm && (
         <RecordPaymentForm
           expenseId={expenseId}
+          expenseName={expenseName}
           personId={person.id}
           personName={person.name}
           remaining={remaining}

@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { PaymentTransferDetails } from "@/components/payments/payment-transfer-details";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { buildPaymentReference } from "@/lib/payment-transfer";
 import { createClient } from "@/lib/supabase/client";
-import { PaymentQrPanel } from "@/components/payments/payment-qr-panel";
 
 type RecordIouPaymentFormProps = {
   iouId: string;
@@ -15,6 +17,7 @@ type RecordIouPaymentFormProps = {
   availableToSubmit: number;
   requiresConfirmation: boolean;
   paymentMode: "mark-paid" | "record-received";
+  iouReason: string;
   receiverPaymentQrPath: string | null;
   onClose: () => void;
 };
@@ -27,12 +30,14 @@ export function RecordIouPaymentForm({
   availableToSubmit,
   requiresConfirmation,
   paymentMode,
+  iouReason,
   receiverPaymentQrPath,
   onClose,
 }: RecordIouPaymentFormProps) {
   const router = useRouter();
 
   const supabase = useMemo(() => createClient(), []);
+  const online = useOnlineStatus();
 
   const [amount, setAmount] = useState(availableToSubmit.toFixed(2));
   const [note, setNote] = useState("");
@@ -42,13 +47,21 @@ export function RecordIouPaymentForm({
   const numericAmount = Number(amount) || 0;
 
   const canSave =
-    numericAmount > 0 && numericAmount <= availableToSubmit && !saving;
+    numericAmount > 0 &&
+    numericAmount <= availableToSubmit &&
+    !saving &&
+    online;
 
   const pendingReserved = Math.max(remaining - availableToSubmit, 0);
 
   const isMarkingOwnPayment = paymentMode === "mark-paid";
 
   async function handleSave() {
+    if (!navigator.onLine) {
+      setError("You’re offline. Reconnect before recording this payment.");
+      return;
+    }
+
     if (!canSave) return;
 
     setSaving(true);
@@ -130,10 +143,27 @@ export function RecordIouPaymentForm({
         )}
 
         {isMarkingOwnPayment && (
-          <PaymentQrPanel
-            paymentQrPath={receiverPaymentQrPath}
+          <PaymentTransferDetails
+            amount={numericAmount}
+            reference={buildPaymentReference({
+              kind: "iou",
+              transactionName: iouReason,
+            })}
+            receiverPaymentQrPath={receiverPaymentQrPath}
             receiverName={creditorName}
           />
+        )}
+
+        {!online && (
+          <div
+            role="alert"
+            className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3"
+          >
+            <p className="text-xs text-amber-300">
+              You’re offline. You can still copy payment details or save a
+              loaded QR, but reconnect before recording the payment.
+            </p>
+          </div>
         )}
 
         <div className="mt-4">

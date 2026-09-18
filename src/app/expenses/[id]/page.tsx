@@ -474,6 +474,7 @@ export default async function ExpenseDetailPage({
               >
                 <ExpenseParticipantRow
                   expenseId={expense.id}
+                  expenseName={expense.name}
                   person={{
                     ...participant.person,
                     name: participant.person.displayName,

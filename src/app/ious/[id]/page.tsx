@@ -408,6 +408,7 @@ export default async function IouDetailPage({ params }: IouDetailPageProps) {
               remaining={remaining}
               availableToSubmit={availableToSubmit}
               requiresConfirmation={requiresConfirmation}
+              iouReason={iou.reason}
               receiverPaymentQrPath={creditor.payment_qr_path}
               paymentMode={
                 currentUserIsDebtor ? "mark-paid" : "record-received"

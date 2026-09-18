@@ -12,6 +12,7 @@ type IouPaymentActionProps = {
   availableToSubmit: number;
   requiresConfirmation: boolean;
   paymentMode: "mark-paid" | "record-received";
+  iouReason: string;
   receiverPaymentQrPath: string | null;
 };
 
@@ -23,6 +24,7 @@ export function IouPaymentAction({
   availableToSubmit,
   requiresConfirmation,
   paymentMode,
+  iouReason,
   receiverPaymentQrPath,
 }: IouPaymentActionProps) {
   const [open, setOpen] = useState(false);
@@ -46,6 +48,7 @@ export function IouPaymentAction({
           availableToSubmit={availableToSubmit}
           requiresConfirmation={requiresConfirmation}
           paymentMode={paymentMode}
+          iouReason={iouReason}
           receiverPaymentQrPath={receiverPaymentQrPath}
           onClose={() => setOpen(false)}
         />

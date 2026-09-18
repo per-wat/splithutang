@@ -4,9 +4,11 @@ import { Check, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { PaymentTransferDetails } from "@/components/payments/payment-transfer-details";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { buildPaymentReference } from "@/lib/payment-transfer";
 import { monthLabels, sumSelectedPeriods } from "@/lib/recurring";
 import { createClient } from "@/lib/supabase/client";
-import { PaymentQrPanel } from "@/components/payments/payment-qr-panel";
 
 type PayablePeriod = {
   id: string;
@@ -21,6 +23,7 @@ type RecurringPaymentFormProps = {
   personName: string;
   periods: PayablePeriod[];
   requiresConfirmation: boolean;
+  arrangementName: string;
   payerName: string;
   receiverPaymentQrPath: string | null;
   mode: "mark-paid" | "record-received";
@@ -33,6 +36,7 @@ export function RecurringPaymentForm({
   personName,
   periods,
   requiresConfirmation,
+  arrangementName,
   payerName,
   receiverPaymentQrPath,
   mode,
@@ -40,17 +44,30 @@ export function RecurringPaymentForm({
 }: RecurringPaymentFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const online = useOnlineStatus();
   const [selected, setSelected] = useState<string[]>(periods[0] ? [periods[0].id] : []);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const total = sumSelectedPeriods(periods, selected);
+  const selectedPeriodLabel = periods
+    .filter((period) => selected.includes(period.id))
+    .map((period) => {
+      const date = new Date(`${period.periodStart}T00:00:00Z`);
+      return `${monthLabels[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+    })
+    .join(", ");
 
   function toggle(id: string) {
     setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   }
 
   async function save() {
+    if (!navigator.onLine) {
+      setError("You’re offline. Reconnect before recording this payment.");
+      return;
+    }
+
     if (!selected.length || saving) return;
     setSaving(true);
     setError("");
@@ -99,11 +116,23 @@ export function RecurringPaymentForm({
           <div className="flex items-center justify-between gap-3"><span className="text-sm text-blue-200">{selected.length} month{selected.length === 1 ? "" : "s"} selected</span><span className="font-bold text-blue-200">RM {total.toFixed(2)}</span></div>
         </div>
         {requiresConfirmation && <p className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">This only records the payment in SplitHutang. {payerName} must confirm they received it before these months are marked as paid.</p>}
-        {mode === "mark-paid" && <PaymentQrPanel paymentQrPath={receiverPaymentQrPath} receiverName={payerName} compact />}
+        {mode === "mark-paid" && (
+          <PaymentTransferDetails
+            amount={total}
+            reference={buildPaymentReference({
+              kind: "recurring",
+              transactionName: arrangementName,
+              qualifier: selectedPeriodLabel,
+            })}
+            receiverPaymentQrPath={receiverPaymentQrPath}
+            receiverName={payerName}
+          />
+        )}
+        {!online && <p role="alert" className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">You’re offline. You can still copy payment details or save a loaded QR, but reconnect before recording the payment.</p>}
         <label htmlFor="recurring-payment-note" className="mt-4 block text-sm font-semibold">Note <span className="font-normal text-muted-foreground">(optional)</span></label>
         <input id="recurring-payment-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="e.g. DuitNow transfer" className="form-input mt-2" />
         {error && <p className="mt-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</p>}
-        <button type="button" disabled={!selected.length || saving} onClick={save} className="mt-5 h-12 w-full rounded-2xl bg-blue-600 font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : mode === "mark-paid" ? "I’ve paid these months" : "Mark as received"}</button>
+        <button type="button" disabled={!selected.length || saving || !online} onClick={save} className="mt-5 h-12 w-full rounded-2xl bg-blue-600 font-semibold text-white disabled:opacity-50">{saving ? "Saving..." : mode === "mark-paid" ? "I’ve paid these months" : "Mark as received"}</button>
       </div>
     </div>
   );
