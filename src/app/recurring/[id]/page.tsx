@@ -140,7 +140,7 @@ export default async function RecurringDetailPage({ params, searchParams }: Prop
                     </div>
                     <div className="mt-2 flex justify-end">
                       {obligation.paymentStatus === "unpaid" && (
-                        <RecurringObligationAction arrangementId={detail.id} personId={obligation.personId} personName={obligation.name} payerName={detail.payerName} receiverPaymentQrPath={payer?.payment_qr_path ?? null} periods={detail.periods} requiresConfirmation={requiresConfirmation} mode={detail.isPayer ? "record-received" : "mark-paid"} />
+                        <RecurringObligationAction arrangementId={detail.id} arrangementName={detail.name} personId={obligation.personId} personName={obligation.name} payerName={detail.payerName} receiverPaymentQrPath={payer?.payment_qr_path ?? null} periods={detail.periods} requiresConfirmation={requiresConfirmation} mode={detail.isPayer ? "record-received" : "mark-paid"} />
                       )}
                     </div>
                     {detail.isPayer && obligation.paymentRecordStatus === "pending" && obligation.paymentId && <PaymentReviewActions kind="recurring" paymentId={obligation.paymentId} />}
