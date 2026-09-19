@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-
 import { RecordPaymentForm } from "./record-payment-form";
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
+import { useHistoryOverlay } from "@/hooks/use-history-overlay";
 
 type ExpenseParticipantRowProps = {
   expenseId: string;
@@ -47,7 +46,11 @@ export function ExpenseParticipantRow({
   receiverName,
   receiverPaymentQrPath,
 }: ExpenseParticipantRowProps) {
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const {
+    open: showPaymentForm,
+    openOverlay: openPaymentForm,
+    dismiss: closePaymentForm,
+  } = useHistoryOverlay("expense-payment-sheet");
 
   const settled = !isPayer && remaining <= 0;
 
@@ -121,7 +124,7 @@ export function ExpenseParticipantRow({
                 {canRecordPayment && availableToSubmit > 0 && (
                   <button
                     type="button"
-                    onClick={() => setShowPaymentForm(true)}
+                    onClick={openPaymentForm}
                     className="shrink-0 rounded-xl bg-blue-600/10 px-3 py-2 text-xs font-semibold text-blue-400 transition-colors hover:bg-blue-600/20"
                   >
                     {paymentMode === "mark-paid"
@@ -147,7 +150,7 @@ export function ExpenseParticipantRow({
           paymentMode={paymentMode}
           receiverName={receiverName}
           receiverPaymentQrPath={receiverPaymentQrPath}
-          onClose={() => setShowPaymentForm(false)}
+          onClose={closePaymentForm}
         />
       )}
     </>

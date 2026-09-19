@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { AppRouteShell } from "@/components/layout/app-route-shell";
+import { AppBackNavigation } from "@/components/layout/app-back-navigation";
 import { PwaManager } from "@/components/pwa/pwa-manager";
 
 import "./globals.css";
@@ -66,6 +67,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <PwaManager>
+          <AppBackNavigation />
           <AppRouteShell>{children}</AppRouteShell>
         </PwaManager>
         <SpeedInsights />

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { getParentRoute } from "../src/lib/navigation.ts";
+
 test("the app menu exposes every primary destination and keeps profile separate", async () => {
   const menu = await readFile("src/components/layout/app-menu.tsx", "utf8");
 
@@ -94,9 +96,10 @@ test("phone Back dismisses open navigation and add overlays before changing rout
   assert.match(bottomNav, /router\.replace\(href\)/);
 });
 
-test("page arrows use real history with route fallbacks and completed forms are replaced", async () => {
-  const [backButton, profile, expenseDetail, addExpense, addIou, recurring, group] =
+test("phone Back and page arrows use the same parent-route hierarchy", async () => {
+  const [backNavigation, backButton, profile, expenseDetail, addExpense, addIou, recurring, group] =
     await Promise.all([
+      readFile("src/components/layout/app-back-navigation.tsx", "utf8"),
       readFile("src/components/layout/app-back-button.tsx", "utf8"),
       readFile("src/app/profile/page.tsx", "utf8"),
       readFile("src/app/expenses/[id]/page.tsx", "utf8"),
@@ -106,8 +109,12 @@ test("page arrows use real history with route fallbacks and completed forms are 
       readFile("src/components/groups/create-group-form.tsx", "utf8"),
     ]);
 
-  assert.match(backButton, /router\.back\(\)/);
-  assert.match(backButton, /router\.replace\(fallbackHref\)/);
+  assert.match(backNavigation, /addEventListener\("popstate"/);
+  assert.match(backNavigation, /router\.replace\(parentRoute\)/);
+  assert.match(backNavigation, /pathname === "\/"/);
+  assert.match(backNavigation, /window\.close\(\)/);
+  assert.match(backButton, /getParentRoute\(pathname\) \?\? fallbackHref/);
+  assert.doesNotMatch(backButton, /router\.back\(\)/);
   assert.match(profile, /<AppBackButton fallbackHref="\/"/);
   assert.match(expenseDetail, /<AppBackButton fallbackHref="\/expenses"/);
 
@@ -115,4 +122,35 @@ test("page arrows use real history with route fallbacks and completed forms are 
   assert.match(addIou, /router\.replace\("\/ious"\)/);
   assert.match(recurring, /router\.replace\(id \? `\/recurring\/\$\{id\}`/);
   assert.match(group, /router\.replace\(`\/groups\/\$\{groupId\}`\)/);
+});
+
+test("route parents are deterministic and ignore recurring filters", () => {
+  assert.equal(getParentRoute("/expenses"), "/");
+  assert.equal(getParentRoute("/expenses/example-id"), "/expenses");
+  assert.equal(getParentRoute("/ious"), "/");
+  assert.equal(getParentRoute("/ious/example-id"), "/ious");
+  assert.equal(getParentRoute("/recurring"), "/");
+  assert.equal(getParentRoute("/recurring/example-id"), "/recurring");
+  assert.equal(
+    getParentRoute("/recurring/example-id/edit"),
+    "/recurring/example-id",
+  );
+  assert.equal(getParentRoute("/"), null);
+  assert.equal(getParentRoute("/login"), null);
+});
+
+test("payment sheets and recurring filters do not add unwanted Back steps", async () => {
+  const [expense, iou, recurring, timeline, recurringPage] = await Promise.all([
+    readFile("src/components/expenses/expense-participant-row.tsx", "utf8"),
+    readFile("src/components/ious/iou-payment-action.tsx", "utf8"),
+    readFile("src/components/recurring/recurring-obligation-action.tsx", "utf8"),
+    readFile("src/components/recurring/month-timeline.tsx", "utf8"),
+    readFile("src/app/recurring/page.tsx", "utf8"),
+  ]);
+
+  assert.match(expense, /useHistoryOverlay\("expense-payment-sheet"\)/);
+  assert.match(iou, /useHistoryOverlay\([\s\S]*"iou-payment-sheet"/);
+  assert.match(recurring, /useHistoryOverlay\([\s\S]*"recurring-payment-sheet"/);
+  assert.equal((timeline.match(/\breplace\b/g) ?? []).length, 3);
+  assert.equal((recurringPage.match(/\breplace\b/g) ?? []).length, 2);
 });
