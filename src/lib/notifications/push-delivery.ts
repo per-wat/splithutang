@@ -182,6 +182,8 @@ function buildPushPayload(notification: {
   const isPayment = paymentNotificationTypes.has(
     notification.notification_type as NotificationType,
   );
+  const isAnnouncement =
+    notification.notification_type === "announcement_published";
   const resourceType = [
     "expense",
     "iou",
@@ -189,6 +191,7 @@ function buildPushPayload(notification: {
     "person",
     "group_invite",
     "recurring",
+    "announcement",
   ].includes(notification.resource_type)
     ? (notification.resource_type as
         | "expense"
@@ -196,7 +199,8 @@ function buildPushPayload(notification: {
         | "group"
         | "person"
         | "group_invite"
-        | "recurring")
+        | "recurring"
+        | "announcement")
     : null;
   const path = resourceType
     ? (notificationPath(resourceType, notification.resource_id) ??
@@ -209,10 +213,14 @@ function buildPushPayload(notification: {
   return {
     title: isRecurringReminder
       ? notification.title
+      : isAnnouncement
+      ? notification.title
       : isPayment
       ? "SplitHutang payment update"
       : "New SplitHutang activity",
     body: isRecurringReminder
+      ? notification.body
+      : isAnnouncement
       ? notification.body
       : isPayment
       ? "A payment or settlement changed. Open SplitHutang for details."

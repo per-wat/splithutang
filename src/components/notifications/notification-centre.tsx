@@ -6,6 +6,7 @@ import {
   CheckCheck,
   CircleDollarSign,
   FileText,
+  Megaphone,
   Receipt,
   RefreshCw,
   UserPlus,
@@ -42,6 +43,10 @@ function NotificationTypeIcon({ type }: { type: NotificationType }) {
 
   if (type.startsWith("expense")) {
     return <Receipt className={className} />;
+  }
+
+  if (type === "announcement_published") {
+    return <Megaphone className={className} />;
   }
 
   if (type.startsWith("iou")) {
@@ -381,6 +386,7 @@ async function resourceIsAvailable(
     iou: "ious",
     group: "groups",
     person: "people",
+    announcement: "announcements",
   } as const satisfies Record<Exclude<NotificationResourceType, "group_invite" | "recurring">, string>;
   const table = tableByType[resourceType];
   const { data, error } = await supabase

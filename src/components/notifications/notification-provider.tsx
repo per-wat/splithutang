@@ -82,7 +82,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           filter: `recipient_user_id=eq.${userId}`,
         },
         (payload) => {
-          if (payload.eventType === "INSERT") {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const parsed = parseNotificationRow(
               payload.new as Tables<"notifications">,
             );
@@ -92,6 +92,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 parsed,
                 ...current.filter((notification) => notification.id !== parsed.id),
               ].slice(0, 50));
+            }
+          }
+
+          if (payload.eventType === "DELETE") {
+            const deletedId = (payload.old as { id?: unknown }).id;
+            if (typeof deletedId === "string") {
+              setLiveNotifications((current) =>
+                current.filter((notification) => notification.id !== deletedId),
+              );
             }
           }
 

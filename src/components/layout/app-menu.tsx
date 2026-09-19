@@ -11,6 +11,7 @@ import {
   Home,
   ListChecks,
   Menu,
+  Megaphone,
   QrCode,
   Receipt,
   Settings,
@@ -56,6 +57,12 @@ const supportItems: MenuItem[] = [
   { label: "Getting Started", href: "/getting-started", icon: ListChecks },
   { label: "Payment QR", href: "/payment-qr", icon: QrCode },
   { label: "Settings", href: "/settings", icon: Settings },
+  {
+    label: "Announcements",
+    href: "/announcements",
+    icon: Megaphone,
+    ownerOnly: true,
+  },
   { label: "Usage", href: "/usage", icon: Gauge, ownerOnly: true },
 ];
 
