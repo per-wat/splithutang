@@ -39,6 +39,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          action_label: string | null
+          action_path: string | null
+          archived_at: string | null
+          body: string
+          category: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          published_at: string
+          recipient_count: number
+          send_push: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_path?: string | null
+          archived_at?: string | null
+          body: string
+          category?: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          published_at?: string
+          recipient_count?: number
+          send_push?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_label?: string | null
+          action_path?: string | null
+          archived_at?: string | null
+          body?: string
+          category?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          published_at?: string
+          recipient_count?: number
+          send_push?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_item_addons: {
         Row: {
           amount: number
@@ -898,6 +957,22 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: {
           notification_id: string
+        }[]
+      }
+      publish_announcement: {
+        Args: {
+          p_action_label?: string | null
+          p_action_path?: string | null
+          p_body: string
+          p_category: string
+          p_created_by: string
+          p_expires_at?: string | null
+          p_send_push?: boolean
+          p_title: string
+        }
+        Returns: {
+          announcement_id: string
+          recipient_count: number
         }[]
       }
       create_expense: {

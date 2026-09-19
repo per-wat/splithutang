@@ -1,6 +1,7 @@
 const HOME_ROUTE = "/";
 
 const HOME_CHILD_ROUTES = new Set([
+  "/announcements",
   "/expenses",
   "/getting-started",
   "/groups",
@@ -35,6 +36,8 @@ export function getParentRoute(pathname: string): string | null {
   if (normalized.startsWith("/groups/")) return "/groups";
 
   if (normalized.startsWith("/people/")) return "/people";
+
+  if (normalized.startsWith("/announcements/")) return "/notifications";
 
   if (normalized === "/recurring/new") return "/recurring";
 

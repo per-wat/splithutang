@@ -29,6 +29,7 @@ export const notificationTypes = [
   "recurring_payment_rejected",
   "recurring_payment_due_soon",
   "recurring_payment_due",
+  "announcement_published",
 ] as const;
 
 export type NotificationType = (typeof notificationTypes)[number];
@@ -38,7 +39,8 @@ export type NotificationResourceType =
   | "group"
   | "person"
   | "group_invite"
-  | "recurring";
+  | "recurring"
+  | "announcement";
 export type PushMode =
   | "in_app_only"
   | "all_important"
@@ -59,6 +61,14 @@ export type NotificationMetadata = {
   due_date?: string;
   reminder_kind?: "due_soon" | "due";
   obligation_id?: string;
+  announcement_category?:
+    | "new_feature"
+    | "information"
+    | "maintenance"
+    | "urgent";
+  action_label?: string;
+  action_path?: string;
+  expires_at?: string;
 };
 
 export type NotificationRow = Omit<
@@ -101,9 +111,15 @@ export function parseNotificationRow(
 ): NotificationRow | null {
   if (
     !isNotificationType(row.notification_type) ||
-    !["expense", "iou", "group", "person", "group_invite", "recurring"].includes(
-      row.resource_type,
-    )
+    ![
+      "expense",
+      "iou",
+      "group",
+      "person",
+      "group_invite",
+      "recurring",
+      "announcement",
+    ].includes(row.resource_type)
   ) {
     return null;
   }
@@ -133,6 +149,7 @@ export function notificationPath(
     person: "/people/",
     group_invite: "/invite/",
     recurring: "/recurring/",
+    announcement: "/announcements/",
   };
 
   return `${routes[resourceType]}${resourceId}`;
@@ -162,9 +179,27 @@ function parseMetadata(value: { [key: string]: Json | undefined }): Notification
         ? value.reminder_kind
         : undefined,
     obligation_id: asString(value.obligation_id),
+    announcement_category:
+      value.announcement_category === "new_feature" ||
+      value.announcement_category === "information" ||
+      value.announcement_category === "maintenance" ||
+      value.announcement_category === "urgent"
+        ? value.announcement_category
+        : undefined,
+    action_label: asString(value.action_label),
+    action_path: asInternalPath(value.action_path),
+    expires_at: asString(value.expires_at),
   };
 }
 
 function asString(value: Json | undefined): string | undefined {
   return typeof value === "string" ? value : undefined;
+}
+
+function asInternalPath(value: Json | undefined): string | undefined {
+  return typeof value === "string" &&
+    value.startsWith("/") &&
+    !value.startsWith("//")
+    ? value
+    : undefined;
 }

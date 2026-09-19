@@ -17,6 +17,7 @@ test("the app menu exposes every primary destination and keeps profile separate"
     "/getting-started",
     "/payment-qr",
     "/settings",
+    "/announcements",
   ]) {
     assert.match(menu, new RegExp(`href: "${route.replace("/", "\\/")}"`));
   }
@@ -131,6 +132,11 @@ test("route parents are deterministic and ignore recurring filters", () => {
   assert.equal(getParentRoute("/ious/example-id"), "/ious");
   assert.equal(getParentRoute("/recurring"), "/");
   assert.equal(getParentRoute("/recurring/example-id"), "/recurring");
+  assert.equal(getParentRoute("/announcements"), "/");
+  assert.equal(
+    getParentRoute("/announcements/example-id"),
+    "/notifications",
+  );
   assert.equal(
     getParentRoute("/recurring/example-id/edit"),
     "/recurring/example-id",

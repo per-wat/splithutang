@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 
 const APP_SHELL_ROUTES = new Set([
   "/",
+  "/announcements",
   "/expenses",
   "/groups",
   "/getting-started",
