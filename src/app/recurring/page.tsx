@@ -61,11 +61,11 @@ export default async function RecurringPage({ searchParams }: RecurringPageProps
         </div>
 
         <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/[0.08] bg-card px-3 py-2">
-          <Link href={`/recurring?year=${year - 1}`} aria-label={`View ${year - 1}`} className="flex size-9 items-center justify-center rounded-full text-muted-foreground">
+          <Link href={`/recurring?year=${year - 1}`} replace aria-label={`View ${year - 1}`} className="flex size-9 items-center justify-center rounded-full text-muted-foreground">
             <ChevronLeft className="size-4" />
           </Link>
           <p className="font-bold">{year}</p>
-          <Link href={`/recurring?year=${year + 1}`} aria-label={`View ${year + 1}`} className="flex size-9 items-center justify-center rounded-full text-muted-foreground">
+          <Link href={`/recurring?year=${year + 1}`} replace aria-label={`View ${year + 1}`} className="flex size-9 items-center justify-center rounded-full text-muted-foreground">
             <ChevronRight className="size-4" />
           </Link>
         </div>

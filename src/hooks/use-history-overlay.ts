@@ -40,12 +40,25 @@ export function useHistoryOverlay(marker: string) {
   const closeForNavigation = useCallback(() => {
     ownsHistoryEntry.current = false;
     setOpen(false);
-  }, []);
+
+    const currentState = window.history.state;
+
+    if (currentState?.[OVERLAY_STATE_KEY] === marker) {
+      const nextState = { ...currentState };
+      delete nextState[OVERLAY_STATE_KEY];
+      window.history.replaceState(nextState, "", window.location.href);
+    }
+  }, [marker]);
 
   useEffect(() => {
     if (!open) return;
 
-    function handlePopState() {
+    function handlePopState(event: PopStateEvent) {
+      if (event.state?.[OVERLAY_STATE_KEY] === marker) {
+        ownsHistoryEntry.current = true;
+        return;
+      }
+
       ownsHistoryEntry.current = false;
       setOpen(false);
     }
@@ -55,7 +68,7 @@ export function useHistoryOverlay(marker: string) {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [open]);
+  }, [marker, open]);
 
   return {
     open,

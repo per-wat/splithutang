@@ -30,6 +30,7 @@ export function MonthTimeline({
         <div className="mb-4 flex items-center justify-center gap-4">
           <Link
             href={`${pathname}?year=${year - 1}`}
+            replace
             aria-label={`View ${year - 1}`}
             className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-muted-foreground"
           >
@@ -38,6 +39,7 @@ export function MonthTimeline({
           <p className="min-w-14 text-center font-bold">{year}</p>
           <Link
             href={`${pathname}?year=${year + 1}`}
+            replace
             aria-label={`View ${year + 1}`}
             className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-muted-foreground"
           >
@@ -79,6 +81,7 @@ export function MonthTimeline({
             <Link
               key={label}
               href={`${pathname}?year=${year}&month=${monthNumber}`}
+              replace
               className={className}
               title={`${label}: ${copy.label}`}
               aria-label={`${label} ${year}: ${copy.label}`}
@@ -91,4 +94,3 @@ export function MonthTimeline({
     </div>
   );
 }
-

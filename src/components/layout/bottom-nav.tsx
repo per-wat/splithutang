@@ -166,6 +166,8 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                replace
+                onClick={closeForNavigation}
                 className={`flex w-16 flex-col items-center gap-1 text-xs font-medium transition-colors ${
                   isActive
                     ? "text-blue-500"
@@ -214,6 +216,8 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                replace
+                onClick={closeForNavigation}
                 className={`flex w-16 flex-col items-center gap-1 text-xs font-medium transition-colors ${
                   isActive
                     ? "text-blue-500"

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
 import { RecordIouPaymentForm } from "./record-iou-payment-form";
+import { useHistoryOverlay } from "@/hooks/use-history-overlay";
 
 type IouPaymentActionProps = {
   iouId: string;
@@ -27,13 +26,15 @@ export function IouPaymentAction({
   iouReason,
   receiverPaymentQrPath,
 }: IouPaymentActionProps) {
-  const [open, setOpen] = useState(false);
+  const { open, openOverlay, dismiss } = useHistoryOverlay(
+    "iou-payment-sheet",
+  );
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openOverlay}
         className="h-12 w-full rounded-2xl bg-blue-600 font-semibold text-white transition-all hover:bg-blue-500 active:scale-[0.99]"
       >
         {paymentMode === "mark-paid" ? "I’ve paid" : "Mark as received"}
@@ -50,7 +51,7 @@ export function IouPaymentAction({
           paymentMode={paymentMode}
           iouReason={iouReason}
           receiverPaymentQrPath={receiverPaymentQrPath}
-          onClose={() => setOpen(false)}
+          onClose={dismiss}
         />
       )}
     </>
