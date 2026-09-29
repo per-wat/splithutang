@@ -4,6 +4,7 @@ const HOME_CHILD_ROUTES = new Set([
   "/announcements",
   "/expenses",
   "/getting-started",
+  "/installment-calculator",
   "/groups",
   "/ious",
   "/notifications",
