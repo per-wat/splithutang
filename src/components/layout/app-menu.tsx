@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarClock,
+  Calculator,
   ChevronRight,
   FileText,
   Gauge,
@@ -56,6 +57,7 @@ const mainItems: MenuItem[] = [
 const supportItems: MenuItem[] = [
   { label: "Getting Started", href: "/getting-started", icon: ListChecks },
   { label: "Payment QR", href: "/payment-qr", icon: QrCode },
+  { label: "Installment Calculator", href: "/installment-calculator", icon: Calculator },
   { label: "Settings", href: "/settings", icon: Settings },
   {
     label: "Announcements",

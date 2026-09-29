@@ -10,6 +10,7 @@ const APP_SHELL_ROUTES = new Set([
   "/expenses",
   "/groups",
   "/getting-started",
+  "/installment-calculator",
   "/ious",
   "/notifications",
   "/payment-qr",
