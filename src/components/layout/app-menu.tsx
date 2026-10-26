@@ -16,6 +16,7 @@ import {
   QrCode,
   Receipt,
   Settings,
+  ShieldCheck,
   Users,
   UsersRound,
   X,
@@ -65,6 +66,7 @@ const supportItems: MenuItem[] = [
     icon: Megaphone,
     ownerOnly: true,
   },
+  { label: "Feature Access", href: "/feature-access", icon: ShieldCheck, ownerOnly: true },
   { label: "Usage", href: "/usage", icon: Gauge, ownerOnly: true },
 ];
 

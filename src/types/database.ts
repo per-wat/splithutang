@@ -39,6 +39,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      user_feature_access: {
+        Row: {
+          user_id: string
+          feature_key: string
+          enabled: boolean
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          feature_key: string
+          enabled?: boolean
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          feature_key?: string
+          enabled?: boolean
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feature_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_feature_access_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           action_label: string | null
@@ -947,6 +986,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      search_feature_access_users: {
+        Args: { p_query?: string; p_offset?: number; p_limit?: number }
+        Returns: {
+          user_id: string
+          display_name: string
+          email: string | null
+          enabled_feature_keys: string[]
+        }[]
+      }
       add_group_member: {
         Args: { p_group_id: string; p_person_id: string }
         Returns: undefined
