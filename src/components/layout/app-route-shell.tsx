@@ -8,6 +8,7 @@ const APP_SHELL_ROUTES = new Set([
   "/",
   "/announcements",
   "/feature-access",
+  "/tax-receipts",
   "/expenses",
   "/groups",
   "/getting-started",
@@ -25,7 +26,7 @@ const APP_SHELL_ROUTES = new Set([
 export function AppRouteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  if (!APP_SHELL_ROUTES.has(pathname)) {
+  if (!APP_SHELL_ROUTES.has(pathname) && !pathname.startsWith("/tax-receipts/")) {
     return children;
   }
 
