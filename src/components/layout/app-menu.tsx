@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import type { FeatureKey } from "@/lib/features/catalog";
+
 import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { createClient } from "@/lib/supabase/client";
 import { useHistoryOverlay } from "@/hooks/use-history-overlay";
@@ -44,6 +46,7 @@ type MenuItem = {
   href: string;
   icon: LucideIcon;
   ownerOnly?: boolean;
+  featureKey?: FeatureKey;
 };
 
 const mainItems: MenuItem[] = [
@@ -59,6 +62,7 @@ const supportItems: MenuItem[] = [
   { label: "Getting Started", href: "/getting-started", icon: ListChecks },
   { label: "Payment QR", href: "/payment-qr", icon: QrCode },
   { label: "Installment Calculator", href: "/installment-calculator", icon: Calculator },
+  { label: "Tax receipts", href: "/tax-receipts", icon: Receipt, featureKey: "tax_receipts" },
   { label: "Settings", href: "/settings", icon: Settings },
   {
     label: "Announcements",
@@ -90,7 +94,16 @@ export function AppMenu({ initialProfile, initialCanViewUsage }: AppMenuProps) {
     initialCanViewUsage !== undefined,
   );
 
+  const [featureKeys, setFeatureKeys] = useState<FeatureKey[]>(initialCanViewUsage ? ["tax_receipts"] : []);
+
   async function loadProfile() {
+    // Recheck restricted menu visibility each time the drawer opens; the server
+    // independently authorizes every restricted page and API operation.
+    const featureResponse = await fetch("/api/features/access", { cache: "no-store" }).catch(() => null);
+    try {
+      const access = featureResponse?.ok ? await featureResponse.json() : null;
+      setFeatureKeys(Array.isArray(access?.featureKeys) ? access.featureKeys : []);
+    } catch { setFeatureKeys([]); }
     if (profileLoaded && accessLoaded) return;
 
     const shouldLoadProfile = !profileLoaded;
@@ -229,7 +242,7 @@ export function AppMenu({ initialProfile, initialCanViewUsage }: AppMenuProps) {
               </p>
               <div className="space-y-1">
                 {supportItems
-                  .filter((item) => !item.ownerOnly || canViewUsage)
+                  .filter((item) => (!item.ownerOnly || canViewUsage) && (!item.featureKey || featureKeys.includes(item.featureKey)))
                   .map(renderMenuItem)}
               </div>
             </nav>

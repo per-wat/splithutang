@@ -6,8 +6,10 @@ revoke access. Changes save immediately. The creator's checkboxes stay checked
 and disabled. Search returns 20 users per page and supports literal partial
 matches, including email addresses.
 
-This change reserves `tax_receipts`. It does **not** implement receipt storage,
-change existing public features, or show a nonfunctional tax receipt menu item.
+The `tax_receipts` permission now protects the private receipt helper and its
+menu entry. See [Tax receipt helper](tax-receipt-helper.md) for supported years,
+receipt storage, eligibility checks and yearly downloads. Existing public
+features remain available independently of restricted feature grants.
 
 ## Deployment
 
@@ -60,12 +62,12 @@ search's privileged implementation lives in `private`, behind service-only
 execute permissions and a service-only invoker RPC. Emails are never returned
 to non-owners.
 
-A feature grant authorizes **use**, not ownership of anyone else's data. When
-receipt tables/storage are added, enforce both feature access and ownership on
-all operations, with RLS/storage policies and protected downloads. The owner
-exception currently lives in server code; a database policy must not assume it
-can read an application environment variable. Design that enforcement when the
-receipt data model is added. Never use editable user metadata as authorization.
+A feature grant authorizes **use**, not ownership of anyone else's data. The receipt helper enforces feature access and session ownership through its
+server data layer; browser roles cannot access its table or private bucket
+directly. The creator override authorizes feature use only, and does not allow
+reading another user’s receipts. The owner exception lives in server code;
+database policies must not assume they can read an application environment
+variable. Never use editable user metadata as authorization.
 
 Revoking a grant updates only its `enabled` flag. It does not delete feature
 data. The row records the latest change time and the creator who changed it;

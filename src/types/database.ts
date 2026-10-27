@@ -39,6 +39,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      tax_receipts: {
+        Row: {
+          id: string
+          user_id: string
+          merchant: string
+          purchase_date: string
+          assessment_year: number
+          total_cents: number
+          items: Json
+          answers: Json
+          rules_version: string
+          notes: string
+          file_path: string
+          file_mime: string
+          file_size: number
+          file_sha256: string
+          revision: number
+          deleted_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          merchant: string
+          purchase_date: string
+          assessment_year?: never
+          total_cents: number
+          items: Json
+          answers: Json
+          rules_version: string
+          notes?: string
+          file_path: string
+          file_mime: string
+          file_size: number
+          file_sha256: string
+          revision?: number
+          deleted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          merchant?: string
+          purchase_date?: string
+          total_cents?: number
+          items?: Json
+          answers?: Json
+          rules_version?: string
+          notes?: string
+          revision?: number
+          deleted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [{
+          foreignKeyName: "tax_receipts_user_id_fkey"
+          columns: ["user_id"]
+          isOneToOne: false
+          referencedRelation: "profiles"
+          referencedColumns: ["id"]
+        }]
+      }
       user_feature_access: {
         Row: {
           user_id: string

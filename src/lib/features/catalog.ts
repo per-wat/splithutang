@@ -2,7 +2,7 @@ export const restrictedFeatures = [
   {
     key: "tax_receipts",
     label: "Tax receipts",
-    description: "Save receipts for tax claims. Receipt storage will be added later.",
+    description: "Save private receipts, check supported reliefs and download yearly evidence.",
   },
 ] as const;
 

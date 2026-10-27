@@ -3,6 +3,7 @@ const HOME_ROUTE = "/";
 const HOME_CHILD_ROUTES = new Set([
   "/announcements",
   "/feature-access",
+  "/tax-receipts",
   "/expenses",
   "/getting-started",
   "/installment-calculator",
@@ -27,6 +28,8 @@ export function getParentRoute(pathname: string): string | null {
 
   if (normalized === HOME_ROUTE) return null;
   if (HOME_CHILD_ROUTES.has(normalized)) return HOME_ROUTE;
+
+  if (normalized.startsWith("/tax-receipts/")) return "/tax-receipts";
 
   if (normalized === "/add-expense") return "/expenses";
   if (normalized.startsWith("/expenses/")) return "/expenses";
